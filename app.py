@@ -6,7 +6,7 @@ from functools import wraps
 
 app = Flask(__name__)
 
-app.secret_key = "1234"  # Needed for sessions
+app.secret_key = "f10360288a752c7695de054e98e48d3a"  # Needed for sessions
 
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password"  # Change this to a secure one
