@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>⚙️ Settings</h1>
+
+<div class="content-card">
+    <form method="post" style="display: flex; flex-direction: column; gap: 15px;">
+        <label>Current Month Start:</label>
+        <input type="date" name="current_month_start" value="{{ settings.current_month_start }}" required>
+
+        <label>Current Month End:</label>
+        <input type="date" name="current_month_end" value="{{ settings.current_month_end }}" required>
+
+        <label>Monthly Deal Target:</label>
+        <input type="number" name="monthly_deal_target" value="{{ settings.monthly_deal_target }}" required>
+
+        <label>Stretch Goal:</label>
+        <input type="number" name="stretch_goal" value="{{ settings.stretch_goal }}" required>
+
+        <button type="submit" class="submit">Save Settings</button>
+    </form>
+
+    <!-- Finalize Month Button -->
+    <form action="{{ url_for('finalize_month') }}" method="post" style="margin-top:20px;">
+        <button type="submit" class="submit">Finalize Month & Save Scores</button>
+    </form>
+</div>
+{% endblock %}

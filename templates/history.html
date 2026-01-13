@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 style="text-align:center; margin-bottom:20px;">📜 History</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Employee</th>
+            <th>Shift</th>
+            <th>Hours</th>
+            <th>Deals</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.date }}</td>
+            <td>{{ entry.employee }}</td>
+            <td>{{ entry.shift }}</td>
+            <td>{{ entry.hours }}</td>
+            <td>{{ entry.deals }}</td>
+            <td>
+                <button class="edit-btn" onclick="openEditModal({{ loop.index0 }})">Edit</button>
+                <a href="{{ url_for('delete_entry', index=loop.index0) }}">
+                    <button class="delete">Delete</button>
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>Edit Entry</h2>
+        <form id="editForm" method="POST">
+            <input type="hidden" name="index" id="editIndex">
+            
+            <label>Employee:</label>
+            <select name="employee" id="editEmployee" required>
+                <option value="Sarah">Sarah</option>
+                <option value="Angie">Angie</option>
+                <option value="Beth">Beth</option>
+                <option value="Terry">Terry</option>
+                <option value="Jeff">Jeff</option>
+                <option value="Vernon">Vernon</option>
+            </select>
+
+            <label>Date:</label>
+            <input type="date" name="date" id="editDate" required>
+
+            <label>Shift:</label>
+            <select name="shift" id="editShift" required>
+                <option value="Open">Open</option>
+                <option value="Mid">Mid</option>
+                <option value="Close">Close</option>
+            </select>
+
+            <label>Hours:</label>
+            <input type="number" step="0.1" name="hours" id="editHours" required>
+
+            <label>Deals:</label>
+            <input type="number" name="deals" id="editDeals" required>
+
+            <button type="submit" class="submit">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditModal(index) {
+    const entries = {{ entries | tojson }};
+    const entry = entries[index];
+    
+    document.getElementById('editIndex').value = index;
+    document.getElementById('editEmployee').value = entry.employee;
+    document.getElementById('editDate').value = entry.date;
+    document.getElementById('editShift').value = entry.shift;
+    document.getElementById('editHours').value = entry.hours;
+    document.getElementById('editDeals').value = entry.deals;
+
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// Handle form submission via JS
+document.getElementById('editForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const index = document.getElementById('editIndex').value;
+
+    fetch(`/edit_entry/${index}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            employee: document.getElementById('editEmployee').value,
+            date: document.getElementById('editDate').value,
+            shift: document.getElementById('editShift').value,
+            hours: parseFloat(document.getElementById('editHours').value),
+            deals: parseInt(document.getElementById('editDeals').value)
+        })
+    }).then(res => {
+        if(res.ok) location.reload();
+    });
+});
+</script>
+
+{% endblock %}

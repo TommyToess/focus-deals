@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>📊 Monthly Score Comparison</h1>
+
+<div class="content-card">
+    <table>
+        <thead>
+            <tr>
+                <th>Employee</th>
+                {% for month in months %}
+                    <th>{{ month }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table %}
+            <tr>
+                <td><strong>{{ row.employee }}</strong></td>
+                {% for cell in row.scores %}
+                <td
+                    style="
+                        font-weight:600;
+                        color:
+                        {% if cell.change is not none %}
+                            {% if cell.change > 0 %}#27ae60
+                            {% elif cell.change < 0 %}#eb5757
+                            {% else %}#555
+                            {% endif %}
+                        {% else %}
+                            #555
+                        {% endif %}
+                    "
+                >
+                    {% if cell.value is not none %}
+                        {{ cell.value }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

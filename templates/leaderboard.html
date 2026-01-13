@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🏆 Leaderboard</h1>
+
+<div class="content-card">
+    <!-- Filter Form -->
+    <form method="get" style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <label>Start Date:</label>
+        <input type="date" name="start_date" value="{{ start_date }}">
+        <label>End Date:</label>
+        <input type="date" name="end_date" value="{{ end_date }}">
+        <button type="submit" class="submit">Filter</button>
+    </form>
+
+    <!-- Leaderboard Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Place</th>
+                <th>Employee</th>
+                <th>Hours</th>
+                <th>Deals</th>
+                <th>DPH</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set total_hours = 0 %}
+            {% set total_deals = 0 %}
+            {% for row in leaderboard %}
+            {% set total_hours = total_hours + row.hours %}
+            {% set total_deals = total_deals + row.deals %}
+            <tr {% if loop.index == 1 %} style="background-color:#ffd700;" {% endif %}>
+                <td>{{ loop.index }}</td>
+                <td>{{ row.employee }}</td>
+                <td>{{ row.hours }}</td>
+                <td>{{ row.deals }}</td>
+                <td>{% if row.hours>0 %}{{ (row.deals/row.hours)|round(2) }}{% else %}0{% endif %}</td>
+            </tr>
+            {% endfor %}
+
+            <!-- Total DPH -->
+            <tr style="font-weight:bold; background:#f0f0f0;">
+                <td>-</td>
+                <td>Total</td>
+                <td>{{ total_hours }}</td>
+                <td>{{ total_deals }}</td>
+                <td>{% if total_hours>0 %}{{ (total_deals/total_hours)|round(2) }}{% else %}0{% endif %}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Monthly Target: {{ deals_done }} / {{ settings.monthly_deal_target }} deals</p>
+    <p>Monthly Stretch Target: {{ deals_done }} / {{ settings.stretch_goal }} deals</p>
+</div>
+{% endblock %}

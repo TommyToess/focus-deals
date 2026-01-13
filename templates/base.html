@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title if title else "Focus Deals Tracker" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="/">🏠 Home</a>
+        <a href="/leaderboard">🏆 Leaderboard</a>
+        <a href="/compare_scores">📊 Compare Months</a>
+        {% if session.get('admin_logged_in') %}
+        <a href="/history">📜 History</a>
+        <a href="/settings">⚙️ Settings</a>
+        <a href="{{ url_for('admin_logout') }}" class="right-link">Logout</a>
+        {% else %}
+        <a href="{{ url_for('admin_login') }}" class="right-link">Login</a>
+        {% endif %}
+    </nav>
+
+    <!-- Main Content -->
+    <div class="content-card">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+    function openAddModal() {
+        document.getElementById("addModal").style.display = "flex"; // only here
+    }
+    function closeAddModal() {
+        document.getElementById("addModal").style.display = "none";
+    }
+    // Close modal on ESC
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") closeAddModal();
+    });
+    </script>
+
+        <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h2>Add Entry</h2>
+            <form method="POST" action="/">
+                <label>Employee</label>
+                <select name="employee" required>
+                    <option value="" disabled selected>Select Employee</option>
+                    {% for e in employees %}
+                    <option value="{{ e }}">{{ e }}</option>
+                    {% endfor %}
+                </select>
+
+                <label>Date</label>
+                <input type="date" name="date" value="{{ today }}" required>
+
+                <label>Shift</label>
+                <select name="shift" required>
+                    <option value="" disabled selected>Select Shift</option>
+                    {% for s in shifts %}
+                    <option value="{{ s }}">{{ s }}</option>
+                    {% endfor %}
+                </select>
+
+                <label>Hours</label>
+                <input type="number" step="0.1" name="hours" required>
+
+                <label>Deals</label>
+                <input type="number" name="deals" required>
+
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button type="submit" class="submit">Save</button>
+                    <button type="button" class="delete" onclick="closeAddModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+<style>
+    /* Modal container */
+.modal {
+    display: none; /* hidden by default! */
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 1001;
+
+    /* Flex settings for centering */
+    align-items: center;
+    justify-content: center;
+}
+</style>
+
+</body>
+</html>
