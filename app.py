@@ -167,6 +167,20 @@ def history():
     entries = Entry.query.order_by(Entry.date.desc()).all()
     return render_template("history.html", entries=entries, can_undo=len(undo_stack)>0)
 
+@app.route("/get_entry/<int:id>")
+@admin_required
+def get_entry(id):
+    e = Entry.query.get_or_404(id)
+    return jsonify({
+        "id": e.id,
+        "employee": e.employee,
+        "date": e.date.strftime("%Y-%m-%d"),
+        "shift": e.shift,
+        "hours": e.hours,
+        "deals": e.deals
+    })
+
+
 @app.route("/edit_entry/<int:id>", methods=["POST"])
 def edit_entry(id):
     e = Entry.query.get_or_404(id)
