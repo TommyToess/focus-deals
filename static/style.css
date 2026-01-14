@@ -219,3 +219,10 @@ canvas {
         box-sizing: border-box;
     }
 }
+
+@media (max-width: 600px) {
+    .modal-content input[type="date"] {
+        appearance: none;
+        -webkit-appearance: none;
+    }
+}
