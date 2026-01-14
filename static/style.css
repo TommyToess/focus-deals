@@ -123,19 +123,25 @@ canvas {
 .modal {
     display: none;
     position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
     z-index: 999;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.5); /* semi-transparent background */
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-content {
     background: #fff;
-    margin: 10% auto;
     padding: 20px;
     border-radius: 10px;
-    width: 400px;
+
+    width: 420px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+
     position: relative;
 }
 
@@ -208,6 +214,8 @@ canvas {
     .modal-content {
         width: 90%;
         margin: 20% auto;
+        padding: 15px;
+        border-radius: 12px;
     }
 
     /* Charts fit screen */
