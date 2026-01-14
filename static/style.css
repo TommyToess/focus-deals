@@ -209,3 +209,13 @@ canvas {
         font-size: 1.8rem;
     }
 }
+
+/* ---------- Mobile Fix: Date input overflow ---------- */
+@media (max-width: 600px) {
+    input[type="date"] {
+        max-width: 100%;
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+}
