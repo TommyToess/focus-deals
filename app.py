@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
 app = Flask(__name__)
@@ -16,6 +17,12 @@ ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "password"  # change to secure password
 
 # ---------- Models ----------
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)  # optional: admin rights
 
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -46,8 +53,8 @@ class MonthlyScore(db.Model):
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not session.get("admin_logged_in"):
-            return redirect(url_for("admin_login"))
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
         return f(*args, **kwargs)
     return decorated
 
@@ -85,20 +92,22 @@ undo_stack = []
 
 # ---------- Routes ----------
 
-@app.route("/admin_login", methods=["GET","POST"])
-def admin_login():
+@app.route("/login", methods=["GET","POST"])
+def login():
     if request.method=="POST":
         username = request.form.get("username")
         password = request.form.get("password")
-        if username==ADMIN_USERNAME and password==ADMIN_PASSWORD:
-            session["admin_logged_in"]=True
-            return redirect(url_for("settings"))
-        return render_template("admin_login.html", error="Invalid credentials")
-    return render_template("admin_login.html")
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            session["user_id"] = user.id
+            session["is_admin"] = user.is_admin
+            return redirect(url_for("index"))
+        flash("Invalid username or password", "error")
+    return render_template("login.html")
 
-@app.route("/admin_logout")
-def admin_logout():
-    session.pop("admin_logged_in", None)
+@app.route("/logout")
+def logout():
+    session.pop("alogged_in", None)
     return redirect(url_for("index"))
 
 @app.route("/", methods=["GET","POST"])

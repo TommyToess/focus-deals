@@ -2,7 +2,9 @@
 {% block content %}
 
 <!-- Floating Add Entry Button -->
+ {% if session.get('logged_in') %}
 <button class="floating-add" onclick="openAddModal()">➕</button>
+{% endif %}
 
 <!-- Page Title -->
 <h1 style="text-align:center; margin-bottom:25px;">📊 Focus Deals Dashboard</h1>

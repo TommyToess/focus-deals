@@ -13,12 +13,12 @@
         <a href="/">🏠 Home</a>
         <a href="/leaderboard">🏆 Leaderboard</a>
         <a href="/compare_scores">📊 Compare Months</a>
-        {% if session.get('admin_logged_in') %}
+        {% if session.get('logged_in') %}
         <a href="/history">📜 History</a>
         <a href="/settings">⚙️ Settings</a>
-        <a href="{{ url_for('admin_logout') }}" class="right-link">Logout</a>
+        <a href="{{ url_for('logout') }}" class="right-link">Logout</a>
         {% else %}
-        <a href="{{ url_for('admin_login') }}" class="right-link">Login</a>
+        <a href="{{ url_for('login') }}" class="right-link">Login</a>
         {% endif %}
     </nav>
 
