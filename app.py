@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.secret_key = "f10360288a752c7695de054e98e48d3a"
 
 # ---------- Render DB ----------
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:GadUsotO3gIaTJlTUo4cUQom77mimBTa@dpg-d5jdsi15pdvs739bsv8g-a.oregon-postgres.render.com/data_t0qd'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
