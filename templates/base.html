@@ -13,14 +13,18 @@
         <a href="/">🏠 Home</a>
         <a href="/leaderboard">🏆 Leaderboard</a>
         <a href="/compare_scores">📊 Compare Months</a>
-        {% if session.get('is_admin') %}
-        <a href="/history">📜 History</a>
-        <a href="/settings">⚙️ Settings</a>
-        <a href="{{ url_for('logout') }}" class="right-link">Logout</a>
+
+        {% if session.get('logged_in') %}
+            {% if session.get('is_admin') %}
+                <a href="/history">📜 History</a>
+                <a href="/settings">⚙️ Settings</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="right-link">Logout</a>
         {% else %}
-        <a href="{{ url_for('login') }}" class="right-link">Login</a>
+            <a href="{{ url_for('login') }}" class="right-link">Login</a>
         {% endif %}
     </nav>
+
 
     <!-- Main Content -->
     <div class="content-card">
