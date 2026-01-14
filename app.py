@@ -94,21 +94,24 @@ undo_stack = []
 
 @app.route("/login", methods=["GET","POST"])
 def login():
-    if request.method=="POST":
+    if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             session["user_id"] = user.id
             session["is_admin"] = user.is_admin
+            session["logged_in"] = True
             return redirect(url_for("index"))
         flash("Invalid username or password", "error")
     return render_template("login.html")
 
 @app.route("/logout")
 def logout():
-    session.pop("alogged_in", None)
-    return redirect(url_for("index"))
+    session.pop("logged_in", None)
+    session.pop("user_id", None)
+    session.pop("is_admin", None)
+    return redirect(url_for("login"))  # redirect to login page
 
 @app.route("/", methods=["GET","POST"])
 def index():
