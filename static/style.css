@@ -210,19 +210,29 @@ canvas {
     }
 }
 
-/* ---------- Mobile Fix: Date input overflow ---------- */
+/* ---------- iOS Date Input Fix (Modal) ---------- */
 @media (max-width: 600px) {
-    input[type="date"] {
-        max-width: 100%;
+    .modal-content input[type="date"] {
         width: 100%;
+        max-width: 100%;
         min-width: 0;
+
+        padding-left: 12px;
+        padding-right: 12px;
+
         box-sizing: border-box;
+
+        appearance: none;
+        -webkit-appearance: none;
+
+        text-align: left;
     }
 }
 
 @media (max-width: 600px) {
     .modal-content input[type="date"] {
-        appearance: none;
-        -webkit-appearance: none;
+        font-size: 1rem;
+        line-height: 1.2;
     }
 }
+
