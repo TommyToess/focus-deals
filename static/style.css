@@ -6,6 +6,7 @@
     gap: 20px;
     border-radius: 8px;
     margin-bottom: 30px;
+    align-items: center;
 }
 
 .navbar a {
@@ -28,6 +29,7 @@
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
 }
 
 /* ---------- Buttons ---------- */
@@ -68,7 +70,9 @@ th {
     font-weight: 600;
 }
 
-tr:nth-child(even) td { background: #f5f6fa; }
+tr:nth-child(even) td {
+    background: #f5f6fa;
+}
 
 /* ---------- Form Inputs ---------- */
 form input,
@@ -79,11 +83,10 @@ form select {
     border-radius: 6px;
     border: 1px solid #d1d5db;
     font-size: 1rem;
-    height: 42px; /* ensure inputs and dropdowns are the same height */
+    height: 42px;
     box-sizing: border-box;
 }
 
-/* Focus effect for inputs and selects */
 form input:focus,
 form select:focus {
     border-color: #2f80ed;
@@ -99,7 +102,7 @@ canvas {
     margin-top: 20px;
 }
 
-/* Floating button */
+/* ---------- Floating Add Button ---------- */
 .floating-add {
     position: fixed;
     bottom: 25px;
@@ -120,67 +123,62 @@ canvas {
     z-index: 1000;
 }
 
+/* ---------- Modal (FIXED + MOBILE SAFE) ---------- */
 .modal {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.5);
     z-index: 999;
+    background-color: rgba(0,0,0,0.5);
 
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+/* Modal Box */
 .modal-content {
-    background: #fff;
+    background: #ffffff;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 12px;
 
-    width: 420px;
-    max-width: 95vw;
-    max-height: 90vh;
+    width: 90%;
+    max-width: 420px;
+
+    max-height: 85vh;
     overflow-y: auto;
 
     position: relative;
 }
 
+/* Close Button */
 .close {
     position: absolute;
+    top: 12px;
     right: 15px;
-    top: 10px;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: bold;
     cursor: pointer;
+    line-height: 1;
 }
 
-.modal-content form { display: flex; flex-direction: column; gap: 5px; }
+/* Modal Form Layout */
+.modal-content form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-/* ---------- Mobile Responsiveness ---------- */
-@media (max-width: 768px) {
+/* ---------- Mobile Adjustments (SAFE) ---------- */
+@media (max-width: 600px) {
 
-    /* Navbar stacks vertically */
     .navbar {
-        flex-direction: column;
-        gap: 10px;
-        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
     }
 
-    .navbar a.right-link {
-        margin-left: 0;
-        align-self: flex-end;
-    }
-
-    /* Content padding smaller on mobile */
     .content-card {
-        padding: 15px;
-    }
-
-    /* Tables: horizontal scroll instead of squish */
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
+        padding: 18px;
     }
 
     th, td {
@@ -188,41 +186,26 @@ canvas {
         font-size: 0.9rem;
     }
 
-    /* Forms: better spacing */
-    form input,
-    form select,
-    form button {
-        font-size: 1rem;
-        height: 46px;
-    }
-
-    /* Buttons slightly bigger for touch */
-    button {
-        padding: 12px 18px;
-    }
-
-    /* Floating add button smaller */
-    .floating-add {
-        width: 50px;
-        height: 50px;
-        font-size: 1.6rem;
-        bottom: 20px;
-        right: 20px;
-    }
-
-    /* Modal scales to phone */
     .modal-content {
-        width: 90%;
-        margin: 20% auto;
+        width: 95%;
+        max-height: 90vh;
         padding: 15px;
-        border-radius: 12px;
     }
 
-    /* Charts fit screen */
-    canvas {
-        width: 100% !important;
-        height: auto !important;
+    .modal-content h2 {
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .modal-content button {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+    }
+
+    .floating-add {
+        width: 56px;
+        height: 56px;
+        font-size: 1.8rem;
     }
 }
-
-
