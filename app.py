@@ -53,8 +53,9 @@ class MonthlyScore(db.Model):
 def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if not session.get("logged_in"):
-            return redirect(url_for("login"))
+        if not session.get("logged_in") or not session.get("is_admin"):
+            # Redirect non-admins to home or login
+            return redirect(url_for("index"))
         return f(*args, **kwargs)
     return decorated
 
