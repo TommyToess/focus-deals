@@ -85,7 +85,7 @@ def build_leaderboard(entries):
     for emp, v in data.items():
         dph = round(v["deals"] / v["hours"], 2) if v["hours"] > 0 else 0
         leaderboard.append({"employee": emp, "hours": v["hours"], "deals": v["deals"], "dph": dph})
-    leaderboard.sort(key=lambda x: x["deals"], reverse=True)
+    leaderboard.sort(key=lambda x: x["dph"], reverse=True)
     return leaderboard
 
 # ---------- Undo Stack ----------
