@@ -37,15 +37,6 @@
                 <td>{% if row.hours>0 %}{{ (row.deals/row.hours)|round(2) }}{% else %}0{% endif %}</td>
             </tr>
             {% endfor %}
-
-            <!-- Total DPH -->
-            <tr style="font-weight:bold; background:#f0f0f0;">
-                <td>-</td>
-                <td>Total</td>
-                <td>{{ total_hours }}</td>
-                <td>{{ total_deals }}</td>
-                <td>{% if total_hours>0 %}{{ (total_deals/total_hours)|round(2) }}{% else %}0{% endif %}</td>
-            </tr>
         </tbody>
     </table>
 
