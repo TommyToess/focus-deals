@@ -1,19 +1,65 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h1>🤖 Ask the Data</h1>
 
-<div class="content-card">
-    <form method="post">
-        <textarea name="question" rows="3" style="width:100%;" required
-            placeholder="Who has the highest DPH this week?">{{ question }}</textarea>
-        <br><br>
-        <button class="submit">Ask</button>
+<div class="content-card" style="max-width:700px;margin:auto;">
+
+    <!-- Chat Window -->
+    <div style="
+        max-height:400px;
+        overflow-y:auto;
+        padding:10px;
+        border:1px solid #ddd;
+        margin-bottom:10px;
+        background:#fafafa;
+    ">
+        {% for msg in chat %}
+            {% if msg.role == "user" %}
+                <div style="text-align:right; margin:8px 0;">
+                    <span style="
+                        display:inline-block;
+                        background:#2f80ed;
+                        color:white;
+                        padding:8px 12px;
+                        border-radius:15px 15px 0 15px;
+                        max-width:80%;
+                    ">
+                        {{ msg.content }}
+                    </span>
+                </div>
+            {% else %}
+                <div style="text-align:left; margin:8px 0;">
+                    <span style="
+                        display:inline-block;
+                        background:#e0e0e0;
+                        padding:8px 12px;
+                        border-radius:15px 15px 15px 0;
+                        max-width:80%;
+                    ">
+                        {{ msg.content }}
+                    </span>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <!-- Input -->
+    <form method="post" style="display:flex; gap:10px;">
+        <input
+            type="text"
+            name="question"
+            placeholder="Ask about performance, hours, deals..."
+            required
+            style="flex:1; padding:10px;"
+        >
+        <button class="submit">Send</button>
     </form>
 
-    {% if answer %}
-    <hr>
-    <h3>Answer</h3>
-    <p>{{ answer }}</p>
+    {% if error %}
+    <p style="color:red;margin-top:10px;">{{ error }}</p>
     {% endif %}
+
 </div>
+
 {% endblock %}

@@ -103,47 +103,71 @@ undo_stack = []
 # ---------- Routes ----------
 
 @app.route("/ask", methods=["GET", "POST"])
-@admin_required  # optional but recommended
+@admin_required
 def ask():
-    answer = None
-    question = None
+    if "chat" not in session:
+        session["chat"] = []
+
+    error = None
 
     if request.method == "POST":
-        question = request.form["question"]
+        try:
+            user_message = request.form["question"]
 
-        # 1️⃣ Pull relevant data
-        entries = Entry.query.all()
+            # Save user message
+            session["chat"].append({
+                "role": "user",
+                "content": user_message
+            })
 
-        # 2️⃣ Convert data into text
-        data_summary = []
-        for e in entries:
-            data_summary.append(
-                f"{e.employee} worked {e.hours} hours on {e.date} and got {e.deals} deals"
-            )
+            # Pull summarized data (important)
+            entries = Entry.query.all()
+            summary = [
+                f"{e.employee}: {e.hours} hours, {e.deals} deals on {e.date}"
+                for e in entries
+            ]
 
-        context = "\n".join(data_summary)
+            data_context = "\n".join(summary)
 
-        # 3️⃣ Ask OpenAI
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
+            messages = [
                 {
                     "role": "system",
                     "content": (
-                        "You are a business analytics assistant for a gas station. "
-                        "Answer questions ONLY using the provided data."
+                        "You are a gas station performance analyst. "
+                        "Answer ONLY using the provided data."
                     )
                 },
                 {
-                    "role": "user",
-                    "content": f"DATA:\n{context}\n\nQUESTION:\n{question}"
+                    "role": "system",
+                    "content": f"DATA:\n{data_context}"
                 }
-            ]
-        )
+            ] + session["chat"]
 
-        answer = response.choices[0].message.content
+            response = client.chat.completions.create(
+                model="gpt-4.1-mini",
+                messages=messages
+            )
 
-    return render_template("ask.html", answer=answer, question=question)
+            ai_reply = response.choices[0].message.content
+
+            # Save AI reply
+            session["chat"].append({
+                "role": "assistant",
+                "content": ai_reply
+            })
+
+            session.modified = True
+
+        except Exception as e:
+            print("OPENAI ERROR:", e)
+            error = "AI service unavailable or usage limit reached."
+
+    return render_template(
+        "ask.html",
+        chat=session["chat"],
+        error=error
+    )
+
 
 @app.route("/login", methods=["GET","POST"])
 def login():
