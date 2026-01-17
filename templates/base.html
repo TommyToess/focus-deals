@@ -18,6 +18,7 @@
             {% if session.get('is_admin') %}
                 <a href="/history">📜 History</a>
                 <a href="/settings">⚙️ Settings</a>
+                <a href="/ask">🤖</a>
             {% endif %}
             <a href="{{ url_for('logout') }}" class="right-link">Logout</a>
         {% else %}

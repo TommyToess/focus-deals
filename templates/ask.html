@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🤖 Ask the Data</h1>
+
+<div class="content-card">
+    <form method="post">
+        <textarea name="question" rows="3" style="width:100%;" required
+            placeholder="Who has the highest DPH this week?">{{ question }}</textarea>
+        <br><br>
+        <button class="submit">Ask</button>
+    </form>
+
+    {% if answer %}
+    <hr>
+    <h3>Answer</h3>
+    <p>{{ answer }}</p>
+    {% endif %}
+</div>
+{% endblock %}

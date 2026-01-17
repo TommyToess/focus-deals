@@ -4,6 +4,9 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
+from openai import OpenAI
+client = OpenAI()
+
 app = Flask(__name__)
 app.secret_key = "f10360288a752c7695de054e98e48d3a"
 
@@ -98,6 +101,49 @@ def build_leaderboard(entries):
 undo_stack = []
 
 # ---------- Routes ----------
+
+@app.route("/ask", methods=["GET", "POST"])
+@admin_required  # optional but recommended
+def ask():
+    answer = None
+    question = None
+
+    if request.method == "POST":
+        question = request.form["question"]
+
+        # 1️⃣ Pull relevant data
+        entries = Entry.query.all()
+
+        # 2️⃣ Convert data into text
+        data_summary = []
+        for e in entries:
+            data_summary.append(
+                f"{e.employee} worked {e.hours} hours on {e.date} and got {e.deals} deals"
+            )
+
+        context = "\n".join(data_summary)
+
+        # 3️⃣ Ask OpenAI
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a business analytics assistant for a gas station. "
+                        "Answer questions ONLY using the provided data."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": f"DATA:\n{context}\n\nQUESTION:\n{question}"
+                }
+            ]
+        )
+
+        answer = response.choices[0].message.content
+
+    return render_template("ask.html", answer=answer, question=question)
 
 @app.route("/login", methods=["GET","POST"])
 def login():
