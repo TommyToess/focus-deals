@@ -98,51 +98,73 @@ undo_stack = []
 
 # ---------- Routes ----------
 
+# ---------- Ask Page (GET) ----------
+@app.route("/ask", methods=["GET"])
+@admin_required
+def ask():
+    # Initialize session chat if it doesn't exist
+    if "chat" not in session:
+        session["chat"] = []
+    return render_template("ask.html", chat=session["chat"], error=None)
+
+
+# ---------- Ask AJAX (POST) ----------
 @app.route("/ask_ajax", methods=["POST"])
 @admin_required
 def ask_ajax():
     data = request.get_json()
     question = data.get("question")
     if not question:
-        return {"error":"No question provided"}, 400
+        return {"error": "No question provided"}, 400
 
     try:
-        # Summarize data
+        # Summarize your entries for context
         entries = Entry.query.all()
-        summary = [
-            f"{e.employee}: {e.hours} hours, {e.deals} deals on {e.date}"
-            for e in entries
-        ]
+        summary = [f"{e.employee}: {round(e.hours,2)} hours, {e.deals} deals on {e.date}" for e in entries]
         data_context = "\n".join(summary)
 
+        # Build system messages
         messages = [
             {
-                "role":"system",
-                "content":(
+                "role": "system",
+                "content": (
                     "You are a gas station performance analyst. "
-                    "You only respond with direct answers. "
+                    "Answer ONLY using the provided data. "
                     "Do NOT explain calculations unless explicitly asked. "
-                    "Do NOT add extra commentary. Only use the provided data."
+                    "Do NOT add extra commentary."
                 )
             },
-            {"role":"system","content":f"DATA:\n{data_context}"},
+            {"role": "system", "content": f"DATA:\n{data_context}"},
+            {"role": "user", "content": question}
         ]
 
         # Call OpenAI
         response = client.chat.completions.create(
             model="gpt-4.1-mini",
-            messages=messages + [{"role":"user","content":question}]
+            messages=messages
         )
 
         answer = response.choices[0].message.content
+
+        # Save to session
+        session["chat"].append({"role": "user", "content": question})
+        session["chat"].append({"role": "assistant", "content": answer})
+        session.modified = True
 
         return {"answer": answer}
 
     except Exception as e:
         print("OPENAI ERROR:", e)
-        if "insufficient_quota" in str(e):
-            return {"error":"AI usage limit reached."}, 500
-        return {"error":"AI service unavailable."}, 500
+        return {"error": "AI service unavailable."}, 500
+
+
+# ---------- Optional: Clear Chat ----------
+@app.route("/clear_chat")
+@admin_required
+def clear_chat():
+    session.pop("chat", None)
+    return redirect(url_for("ask"))
+
 
 
 @app.route("/login", methods=["GET","POST"])
