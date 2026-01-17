@@ -15,10 +15,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:GadUsotO3gIaTJlTUo4c
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# ---------- Admin ----------
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "password"  # change to secure password
-
 # ---------- Models ----------
 
 class User(db.Model):
@@ -102,71 +98,51 @@ undo_stack = []
 
 # ---------- Routes ----------
 
-@app.route("/ask", methods=["GET", "POST"])
+@app.route("/ask_ajax", methods=["POST"])
 @admin_required
-def ask():
-    if "chat" not in session:
-        session["chat"] = []
+def ask_ajax():
+    data = request.get_json()
+    question = data.get("question")
+    if not question:
+        return {"error":"No question provided"}, 400
 
-    error = None
+    try:
+        # Summarize data
+        entries = Entry.query.all()
+        summary = [
+            f"{e.employee}: {e.hours} hours, {e.deals} deals on {e.date}"
+            for e in entries
+        ]
+        data_context = "\n".join(summary)
 
-    if request.method == "POST":
-        try:
-            user_message = request.form["question"]
+        messages = [
+            {
+                "role":"system",
+                "content":(
+                    "You are a gas station performance analyst. "
+                    "You only respond with direct answers. "
+                    "Do NOT explain calculations unless explicitly asked. "
+                    "Do NOT add extra commentary. Only use the provided data."
+                )
+            },
+            {"role":"system","content":f"DATA:\n{data_context}"},
+        ]
 
-            # Save user message
-            session["chat"].append({
-                "role": "user",
-                "content": user_message
-            })
+        # Call OpenAI
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=messages + [{"role":"user","content":question}]
+        )
 
-            # Pull summarized data (important)
-            entries = Entry.query.all()
-            summary = [
-                f"{e.employee}: {e.hours} hours, {e.deals} deals on {e.date}"
-                for e in entries
-            ]
+        answer = response.choices[0].message.content
 
-            data_context = "\n".join(summary)
+        return {"answer": answer}
 
-            messages = [
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a gas station performance analyst. "
-                        "Answer ONLY using the provided data."
-                    )
-                },
-                {
-                    "role": "system",
-                    "content": f"DATA:\n{data_context}"
-                }
-            ] + session["chat"]
-
-            response = client.chat.completions.create(
-                model="gpt-4.1-mini",
-                messages=messages
-            )
-
-            ai_reply = response.choices[0].message.content
-
-            # Save AI reply
-            session["chat"].append({
-                "role": "assistant",
-                "content": ai_reply
-            })
-
-            session.modified = True
-
-        except Exception as e:
-            print("OPENAI ERROR:", e)
-            error = "AI service unavailable or usage limit reached."
-
-    return render_template(
-        "ask.html",
-        chat=session["chat"],
-        error=error
-    )
+    except Exception as e:
+        print("OPENAI ERROR:", e)
+        if "insufficient_quota" in str(e):
+            return {"error":"AI usage limit reached."}, 500
+        return {"error":"AI service unavailable."}, 500
 
 
 @app.route("/login", methods=["GET","POST"])
