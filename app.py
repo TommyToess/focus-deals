@@ -121,7 +121,17 @@ def ask_ajax():
         # Summarize your entries for context
         entries = Entry.query.all()
         summary = [f"{e.employee}: {round(e.hours,2)} hours, {e.deals} deals on {e.date}" for e in entries]
-        data_context = "\n".join(summary)
+
+        # Get settings
+        s = get_settings()  # your existing helper
+        settings_info = (
+            f"Current month: {s.current_month_start} to {s.current_month_end}\n"
+            f"Monthly deal target: {s.monthly_deal_target}\n"
+            f"Stretch goal: {s.stretch_goal}"
+        )
+
+        # Combine data context
+        data_context = "\n".join(summary) + "\n" + settings_info
 
         # Build system messages
         messages = [
