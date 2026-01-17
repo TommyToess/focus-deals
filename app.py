@@ -125,18 +125,23 @@ def ask_ajax():
 
         # Build system messages
         messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a gas station performance analyst. "
-                    "Answer ONLY using the provided data. "
-                    "Do NOT explain calculations unless explicitly asked. "
-                    "Do NOT add extra commentary."
-                )
-            },
-            {"role": "system", "content": f"DATA:\n{data_context}"},
-            {"role": "user", "content": question}
+            {"role": "system", "content": (
+                "You are a gas station performance analyst. "
+                "Answer ONLY using the provided data. "
+                "Do NOT explain calculations unless explicitly asked. "
+                "Do NOT add extra commentary."
+                "Leaderboard is to track DPH (deals per hour) for employees."
+                "Current deal month is defined by the settings."
+            )},
+            {"role": "system", "content": f"DATA:\n{data_context}"}
         ]
+
+        # Add previous conversation
+        for msg in session["chat"]:
+            messages.append({"role": msg["role"], "content": msg["content"]})
+
+        # Add current question last
+        messages.append({"role": "user", "content": question})
 
         # Call OpenAI
         response = client.chat.completions.create(
