@@ -123,8 +123,58 @@ SECURITY_QUESTIONS = [
 undo_stack = []
 
 # ---------- Routes ----------
+@app.route("/employee/<name>")
+def employee_profile(name):
+    s = get_settings()
 
-# ---------- Ask Page (GET) ----------
+    # Month range from settings
+    start = s.current_month_start
+    end = s.current_month_end
+
+    # Pull this employee's entries for the month
+    entries = Entry.query.filter(
+        Entry.employee == name,
+        Entry.date >= start,
+        Entry.date <= end
+    ).order_by(Entry.date.desc()).all()
+
+    total_hours = round(sum(e.hours for e in entries), 2)
+    total_deals = sum(e.deals for e in entries)
+    dph = round(total_deals / total_hours, 2) if total_hours > 0 else 0
+
+    # Daily trend (group by date)
+    daily = {}
+    for e in entries:
+        if e.date not in daily:
+            daily[e.date] = {"hours": 0.0, "deals": 0}
+        daily[e.date]["hours"] += e.hours
+        daily[e.date]["deals"] += e.deals
+
+    trend = []
+    for d in sorted(daily.keys()):
+        h = daily[d]["hours"]
+        deals = daily[d]["deals"]
+        trend.append({
+            "date": d.strftime("%Y-%m-%d"),
+            "hours": round(h, 2),
+            "deals": deals,
+            "dph": round(deals / h, 2) if h > 0 else 0
+        })
+
+    # Recent entries (last 10)
+    recent = entries[:10]
+
+    return render_template(
+        "employee.html",
+        employee=name,
+        settings=s,
+        total_hours=total_hours,
+        total_deals=total_deals,
+        dph=dph,
+        trend=trend,
+        recent=recent
+    )
+
 @app.route("/ask", methods=["GET"])
 @admin_required
 def ask():
@@ -133,8 +183,6 @@ def ask():
         session["chat"] = []
     return render_template("ask.html", chat=session["chat"], error=None)
 
-
-# ---------- Ask AJAX (POST) ----------
 @app.route("/ask_ajax", methods=["POST"])
 @admin_required
 def ask_ajax():
@@ -198,15 +246,11 @@ def ask_ajax():
         print("OPENAI ERROR:", e)
         return {"error": "AI service unavailable."}, 500
 
-
-# ---------- Optional: Clear Chat ----------
 @app.route("/clear_chat")
 @admin_required
 def clear_chat():
     session.pop("chat", None)
     return redirect(url_for("ask"))
-
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -229,7 +273,6 @@ def login():
         flash("Invalid username or password", "error")
 
     return render_template("login.html")
-
 
 @app.route("/change_password", methods=["GET", "POST"])
 def change_password():
@@ -346,7 +389,6 @@ def reset_password_secure():
 
     return render_template("reset_password.html")
 
-
 @app.route("/logout")
 def logout():
     session.pop("logged_in", None)
@@ -398,7 +440,6 @@ def index():
         employees=employees,
         shifts=shifts
     )
-
 
 @app.route("/leaderboard")
 def leaderboard():

@@ -41,7 +41,11 @@
             {% set total_deals = total_deals + row.deals %}
             <tr {% if loop.index == 1 %} style="background-color:#ffd700;" {% endif %}>
               <td>{{ loop.index }}</td>
-              <td>{{ row.employee }}</td>
+              <td>
+                <a href="{{ url_for('employee_profile', name=row.employee) }}">
+                  {{ row.employee }}
+                </a>
+              </td>
               <td>{{ row.hours|round(2) }}</td>
               <td>{{ row.deals }}</td>
               <td>{% if row.hours>0 %}{{ (row.deals/row.hours)|round(2) }}{% else %}0{% endif %}</td>
