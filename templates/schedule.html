@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-container">
+
+  <div class="dashboard-header">
+    <div>
+      <h1>Schedule</h1>
+      <p class="muted">
+        Week: {{ days[0]|pretty_date }} – {{ days[6]|pretty_date }} (Sat–Fri)
+      </p>
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <a class="submit" href="{{ url_for('schedule', week_start=prev_week) }}">← Prev</a>
+      <a class="submit" href="{{ url_for('schedule', week_start=next_week) }}">Next →</a>
+    </div>
+  </div>
+
+  <div class="content-card">
+    <div class="table-wrap">
+      <table class="schedule-table">
+        <thead>
+          <tr>
+            <th style="min-width:220px;">Employee</th>
+            {% for d in days %}
+              <th style="min-width:190px;">{{ d|pretty_date }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for emp in employees %}
+          <tr>
+            <td class="emp-name">{{ emp }}</td>
+
+            {% for d in days %}
+              {% set s = grid.get((emp, d)) %}
+              <td class="schedule-cell">
+                <form method="POST" action="{{ url_for('schedule_set') }}" class="schedule-form">
+                  <input type="hidden" name="employee" value="{{ emp }}">
+                  <input type="hidden" name="date" value="{{ d.strftime('%Y-%m-%d') }}">
+                  <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
+
+                  <div class="time-row">
+                    <input type="time" name="start_time" value="{{ s.start_time.strftime('%H:%M') if s and s.start_time else '' }}">
+                    <span class="dash">–</span>
+                    <input type="time" name="end_time" value="{{ s.end_time.strftime('%H:%M') if s and s.end_time else '' }}">
+                  </div>
+
+                  <select name="role">
+                    <option value="">(Role optional)</option>
+                    {% for r in roles %}
+                      <option value="{{ r }}" {% if s and s.role == r %}selected{% endif %}>{{ r }}</option>
+                    {% endfor %}
+                  </select>
+
+                  <button type="submit" class="mini-save">Save</button>
+
+                  {% if s %}
+                    <div class="saved-note">Saved</div>
+                  {% endif %}
+                </form>
+              </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <p class="muted" style="margin-top:12px;">
+      Leave times blank to mark the day as Off (it will remove the saved shift).
+    </p>
+  </div>
+
+</div>
+
+{% endblock %}

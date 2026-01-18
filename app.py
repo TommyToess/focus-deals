@@ -63,6 +63,18 @@ class MonthlyScore(db.Model):
     deals = db.Column(db.Integer, nullable=False)
     dph = db.Column(db.Float, nullable=False)
 
+class ScheduleShift(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    employee = db.Column(db.String(50), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+
+    start_time = db.Column(db.Time, nullable=True)
+    end_time = db.Column(db.Time, nullable=True)
+    role = db.Column(db.String(50), nullable=True)  # Cashier / Store Manager / ASM / Shift Lead
+
+    __table_args__ = (db.UniqueConstraint('employee', 'date', name='uq_schedule_employee_date'),)
+
+
 # ---------- Helpers ----------
 
 def admin_required(f):
@@ -123,6 +135,82 @@ SECURITY_QUESTIONS = [
 undo_stack = []
 
 # ---------- Routes ----------
+@app.route("/schedule")
+def schedule():
+    today = datetime.today().date()
+    week_start_str = request.args.get("week_start")
+
+    if week_start_str:
+        week_start = datetime.strptime(week_start_str, "%Y-%m-%d").date()
+    else:
+        week_start = get_week_start_saturday(today)
+
+    days = [week_start + timedelta(days=i) for i in range(7)]
+    week_end = days[-1]
+
+    shifts = ScheduleShift.query.filter(
+        ScheduleShift.date >= week_start,
+        ScheduleShift.date <= week_end
+    ).all()
+
+    # Map (employee, date) -> shift record
+    grid = {(s.employee, s.date): s for s in shifts}
+
+    employees = ["Sarah","Angie","Beth","Terry","Jeff","Vernon"]
+    roles = ["Cashier", "Assistant Manager", "Store Manager", "Shift Lead"]
+
+    prev_week = (week_start - timedelta(days=7)).strftime("%Y-%m-%d")
+    next_week = (week_start + timedelta(days=7)).strftime("%Y-%m-%d")
+
+    return render_template(
+        "schedule.html",
+        employees=employees,
+        days=days,
+        grid=grid,
+        roles=roles,
+        week_start=week_start,
+        prev_week=prev_week,
+        next_week=next_week
+    )
+
+@app.route("/schedule/set", methods=["POST"])
+@admin_required
+def schedule_set():
+    employee = request.form["employee"]
+    date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
+
+    start_raw = request.form.get("start_time", "").strip()
+    end_raw = request.form.get("end_time", "").strip()
+    role = request.form.get("role", "").strip() or None
+
+    # If no times, treat as Off (delete)
+    if not start_raw or not end_raw:
+        existing = ScheduleShift.query.filter_by(employee=employee, date=date).first()
+        if existing:
+            db.session.delete(existing)
+            db.session.commit()
+        return redirect(url_for("schedule", week_start=request.form.get("week_start")))
+
+    start_time = datetime.strptime(start_raw, "%H:%M").time()
+    end_time = datetime.strptime(end_raw, "%H:%M").time()
+
+    existing = ScheduleShift.query.filter_by(employee=employee, date=date).first()
+    if existing:
+        existing.start_time = start_time
+        existing.end_time = end_time
+        existing.role = role
+    else:
+        db.session.add(ScheduleShift(
+            employee=employee,
+            date=date,
+            start_time=start_time,
+            end_time=end_time,
+            role=role
+        ))
+
+    db.session.commit()
+    return redirect(url_for("schedule", week_start=request.form.get("week_start")))
+
 @app.route("/employee/<name>")
 def employee_profile(name):
     s = get_settings()
