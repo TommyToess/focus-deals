@@ -109,6 +109,16 @@ def build_leaderboard(entries):
     leaderboard.sort(key=lambda x: x["dph"], reverse=True)
     return leaderboard
 
+SECURITY_QUESTIONS = [
+    "What was the name of your first pet?",
+    "What city were you born in?",
+    "What is your mother’s maiden name?",
+    "What was the name of your first school?",
+    "What is the name of the street you grew up on?",
+    "What was the make of your first car?",
+    "What is your favorite movie?"
+]
+
 # ---------- Undo Stack ----------
 undo_stack = []
 
