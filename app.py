@@ -3,12 +3,24 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from itsdangerous import URLSafeTimedSerializer
 
 from openai import OpenAI
 client = OpenAI()
 
 app = Flask(__name__)
 app.secret_key = "f10360288a752c7695de054e98e48d3a"
+
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+def generate_reset_token(user_id):
+    return serializer.dumps(user_id, salt="password-reset")
+
+def verify_reset_token(token, max_age=3600):
+    try:
+        return serializer.loads(token, salt="password-reset", max_age=max_age)
+    except:
+        return None
 
 # ---------- Render DB ----------
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:GadUsotO3gIaTJlTUo4cUQom77mimBTa@dpg-d5jdsi15pdvs739bsv8g-a.oregon-postgres.render.com/data_t0qd'
@@ -21,7 +33,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)  # optional: admin rights
+    is_admin = db.Column(db.Boolean, default=False)
+    must_change_password = db.Column(db.Boolean, default=True)
 
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -182,19 +195,99 @@ def clear_chat():
 
 
 
-@app.route("/login", methods=["GET","POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
         user = User.query.filter_by(username=username).first()
+
         if user and check_password_hash(user.password_hash, password):
             session["user_id"] = user.id
             session["is_admin"] = user.is_admin
             session["logged_in"] = True
+
+            if user.must_change_password:
+                return redirect(url_for("change_password"))
+
             return redirect(url_for("index"))
+
         flash("Invalid username or password", "error")
+
     return render_template("login.html")
+
+
+@app.route("/change_password", methods=["GET", "POST"])
+def change_password():
+    if not session.get("logged_in"):
+        return redirect(url_for("login"))
+
+    user = User.query.get(session["user_id"])
+
+    if request.method == "POST":
+        new = request.form.get("new_password")
+        confirm = request.form.get("confirm_password")
+
+        if not new or new != confirm:
+            flash("Passwords must match", "error")
+            return redirect(url_for("change_password"))
+
+        user.password_hash = generate_password_hash(new)
+        user.must_change_password = False
+        db.session.commit()
+
+        flash("Password updated successfully", "success")
+        return redirect(url_for("index"))
+
+    return render_template("change_password.html")
+
+
+@app.route("/reset_request", methods=["GET", "POST"])
+def reset_request():
+    if request.method == "POST":
+        username = request.form.get("username")
+        user = User.query.filter_by(username=username).first()
+
+        if user:
+            token = generate_reset_token(user.id)
+            reset_link = url_for("reset_password", token=token, _external=True)
+
+            # TEMP: print link to console (replace with email later)
+            print("PASSWORD RESET LINK:", reset_link)
+
+        flash("If the account exists, a reset link was sent.", "success")
+        return redirect(url_for("login"))
+
+    return render_template("reset_request.html")
+
+@app.route("/reset/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    user_id = verify_reset_token(token)
+
+    if not user_id:
+        flash("Reset link expired or invalid", "error")
+        return redirect(url_for("login"))
+
+    user = User.query.get(user_id)
+
+    if request.method == "POST":
+        new = request.form.get("new_password")
+        confirm = request.form.get("confirm_password")
+
+        if not new or new != confirm:
+            flash("Passwords must match", "error")
+            return redirect(request.url)
+
+        user.password_hash = generate_password_hash(new)
+        user.must_change_password = False
+        db.session.commit()
+
+        flash("Password reset successfully", "success")
+        return redirect(url_for("login"))
+
+    return render_template("change_password.html")
+
 
 @app.route("/logout")
 def logout():
