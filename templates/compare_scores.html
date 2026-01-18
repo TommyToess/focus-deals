@@ -1,46 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>📊 Monthly Score Comparison</h1>
 
-<div class="content-card">
-    <table>
+<div class="stack">
+  <div class="page-header">
+    <h1>Monthly score comparison</h1>
+  </div>
+
+  <div class="content-card">
+    <div class="table-wrap">
+      <table>
         <thead>
-            <tr>
-                <th>Employee</th>
-                {% for month in months %}
-                    <th>{{ month }}</th>
-                {% endfor %}
-            </tr>
+          <tr>
+            <th>Employee</th>
+            {% for month in months %}
+              <th>{{ month }}</th>
+            {% endfor %}
+          </tr>
         </thead>
         <tbody>
-            {% for row in table %}
+          {% for row in table %}
             <tr>
-                <td><strong>{{ row.employee }}</strong></td>
-                {% for cell in row.scores %}
-                <td
-                    style="
-                        font-weight:600;
-                        color:
-                        {% if cell.change is not none %}
-                            {% if cell.change > 0 %}#27ae60
-                            {% elif cell.change < 0 %}#eb5757
-                            {% else %}#555
-                            {% endif %}
-                        {% else %}
-                            #555
-                        {% endif %}
-                    "
-                >
-                    {% if cell.value is not none %}
-                        {{ cell.value }}
-                    {% else %}
-                        —
+              <td><strong>{{ row.employee }}</strong></td>
+              {% for cell in row.scores %}
+                <td style="font-weight: 800; color:
+                  {% if cell.change is not none %}
+                    {% if cell.change > 0 %}#27ae60
+                    {% elif cell.change < 0 %}#eb5757
+                    {% else %}#555
                     {% endif %}
+                  {% else %}
+                    #555
+                  {% endif %}
+                ">
+                  {% if cell.value is not none %}
+                    {{ cell.value }}
+                  {% else %}
+                    -
+                  {% endif %}
                 </td>
-                {% endfor %}
+              {% endfor %}
             </tr>
-            {% endfor %}
+          {% endfor %}
         </tbody>
-    </table>
+      </table>
+    </div>
+
+    <p class="hint" style="margin-top: 12px;">Green means improvement vs the previous saved month. Red means decline.</p>
+  </div>
 </div>
+
 {% endblock %}

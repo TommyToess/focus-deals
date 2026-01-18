@@ -1,46 +1,69 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>🏆 Leaderboard</h1>
 
-<div class="content-card">
-    <!-- Filter Form -->
-    <form method="get" style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <label>Start Date:</label>
-        <input type="date" name="start_date" value="{{ start_date }}">
-        <label>End Date:</label>
-        <input type="date" name="end_date" value="{{ end_date }}">
-        <button type="submit" class="submit">Filter</button>
+<div class="stack">
+  <div class="page-header">
+    <h1>Leaderboard</h1>
+    <span class="badge">Deals in range: {{ deals_done }}</span>
+  </div>
+
+  <div class="content-card">
+    <form method="get" class="form-inline">
+      <div class="form-row">
+        <label for="start_date">Start date</label>
+        <input id="start_date" type="date" name="start_date" value="{{ start_date }}">
+      </div>
+
+      <div class="form-row">
+        <label for="end_date">End date</label>
+        <input id="end_date" type="date" name="end_date" value="{{ end_date }}">
+      </div>
+
+      <button type="submit" class="submit">Filter</button>
     </form>
 
-    <!-- Leaderboard Table -->
-    <table>
+    <div class="table-wrap">
+      <table>
         <thead>
-            <tr>
-                <th>Place</th>
-                <th>Employee</th>
-                <th>Hours</th>
-                <th>Deals</th>
-                <th>DPH</th>
-            </tr>
+          <tr>
+            <th>Place</th>
+            <th>Employee</th>
+            <th>Hours</th>
+            <th>Deals</th>
+            <th>DPH</th>
+          </tr>
         </thead>
         <tbody>
-            {% set total_hours = 0 %}
-            {% set total_deals = 0 %}
-            {% for row in leaderboard %}
+          {% set total_hours = 0 %}
+          {% set total_deals = 0 %}
+          {% for row in leaderboard %}
             {% set total_hours = total_hours + row.hours %}
             {% set total_deals = total_deals + row.deals %}
             <tr {% if loop.index == 1 %} style="background-color:#ffd700;" {% endif %}>
-                <td>{{ loop.index }}</td>
-                <td>{{ row.employee }}</td>
-                <td>{{ row.hours }}</td>
-                <td>{{ row.deals }}</td>
-                <td>{% if row.hours>0 %}{{ (row.deals/row.hours)|round(2) }}{% else %}0{% endif %}</td>
+              <td>{{ loop.index }}</td>
+              <td>{{ row.employee }}</td>
+              <td>{{ row.hours|round(2) }}</td>
+              <td>{{ row.deals }}</td>
+              <td>{% if row.hours>0 %}{{ (row.deals/row.hours)|round(2) }}{% else %}0{% endif %}</td>
             </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+          {% endfor %}
 
-    <p>Monthly Target: {{ deals_done }} / {{ settings.monthly_deal_target }} deals</p>
-    <p>Monthly Stretch Target: {{ deals_done }} / {{ settings.stretch_goal }} deals</p>
+          <tr style="font-weight:800; background:#f0f0f0;">
+            <td>-</td>
+            <td>Total</td>
+            <td>{{ total_hours|round(2) }}</td>
+            <td>{{ total_deals }}</td>
+            <td>{% if total_hours>0 %}{{ (total_deals/total_hours)|round(2) }}{% else %}0{% endif %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="hint" style="margin-top:12px;">
+      Monthly target: {{ deals_done }} / {{ settings.monthly_deal_target }} deals. 
+      Stretch: {{ deals_done }} / {{ settings.stretch_goal }} deals.
+    </p>
+  </div>
 </div>
+
 {% endblock %}

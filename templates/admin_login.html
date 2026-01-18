@@ -3,11 +3,15 @@
 
 <div class="stack">
   <div class="page-header">
-    <h1>Login</h1>
+    <h1>Admin login</h1>
   </div>
 
   <div class="content-card card-tight">
-    <form class="form" method="POST" action="{{ url_for('login') }}">
+    {% if error %}
+      <div class="flash error">{{ error }}</div>
+    {% endif %}
+
+    <form class="form" method="POST">
       <div class="form-row">
         <label for="username">Username</label>
         <input id="username" type="text" name="username" placeholder="Username" required>
@@ -19,7 +23,6 @@
       </div>
 
       <div class="form-actions">
-        <a href="{{ url_for('forgot_password') }}" class="muted">Forgot password?</a>
         <button type="submit" class="submit">Login</button>
       </div>
     </form>

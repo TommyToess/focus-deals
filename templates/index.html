@@ -1,90 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
 
-<!-- Floating Add Entry Button -->
 {% if session.get('logged_in') %}
-<button class="floating-add" onclick="openAddModal()">➕</button>
+<button class="floating-add" onclick="openAddModal()" aria-label="Add entry">+</button>
 {% endif %}
 
-<!-- Page Title -->
-<h1 style="text-align:center; margin-bottom:25px;">📊 Focus Deals Dashboard</h1>
+<div class="stack">
+  <div class="page-header">
+    <h1>Focus Deals Dashboard</h1>
+    <span class="badge">Days left: {{ days_remaining }}</span>
+  </div>
 
-<!-- Top Banner: Current Month + Countdown -->
-<div class="content-card" style="max-width:700px; margin:auto; margin-bottom:25px; display:flex; justify-content:space-between; align-items:center; padding:20px;">
-    <div>
-        <p style="font-weight:600; font-size:1.1rem;">Current Deal Month:</p>
-        <p style="font-size:1.3rem;">
-            {{ settings.current_month_start | pretty_date }} – {{ settings.current_month_end | pretty_date }}
+  <div class="content-card card-wide">
+    <div class="row" style="justify-content: space-between; flex-wrap: wrap;">
+      <div>
+        <p class="muted" style="margin: 0; font-weight: 800;">Current deal month</p>
+        <p style="margin: 4px 0 0; font-size: 1.25rem; font-weight: 900;">
+          {{ settings.current_month_start | pretty_date }} to {{ settings.current_month_end | pretty_date }}
         </p>
+      </div>
+      <div class="badge">
+        Daily needed: {{ daily_needed }}
+      </div>
     </div>
-    <div style="background:#2f80ed; color:white; font-weight:600; padding:15px 20px; border-radius:50%; min-width:60px; min-height:60px; display:flex; align-items:center; justify-content:center; font-size:1.2rem;">
-        {{ days_remaining }}d
-    </div>
-</div>
+  </div>
 
-<!-- Goal Cards -->
-<div style="max-width:700px; margin:auto; margin-bottom:25px; display:flex; gap:15px; flex-wrap:wrap; justify-content:center;">
-    <!-- Deals Done -->
-    <div style="flex:1 1 150px; min-width:150px; background:#e6f7ff; padding:15px; border-radius:8px; text-align:center; font-weight:600;">
-        ⭐ Deals Done
-        <p style="font-size:1.4rem;">{{ deals_done }}</p>
+  <div class="kpi-grid">
+    <div class="kpi soft">
+      Deals done
+      <div class="value">{{ deals_done }}</div>
     </div>
+    <div class="kpi blue">
+      Main goal
+      <div class="value">{{ settings.monthly_deal_target }}</div>
+    </div>
+    <div class="kpi green">
+      Stretch goal
+      <div class="value">{{ settings.stretch_goal }}</div>
+    </div>
+    <div class="kpi soft2">
+      Daily needed
+      <div class="value">{{ daily_needed }}</div>
+    </div>
+  </div>
 
-    <!-- Main Goal -->
-    <div style="flex:1 1 150px; min-width:150px; background:#2f80ed; color:white; padding:15px; border-radius:8px; text-align:center; font-weight:600;">
-        Main Goal
-        <p style="font-size:1.4rem;">{{ settings.monthly_deal_target }}</p>
-    </div>
-
-    <!-- Stretch Goal -->
-    <div style="flex:1 1 150px; min-width:150px; background:#27ae60; color:white; padding:15px; border-radius:8px; text-align:center; font-weight:600;">
-        Stretch Goal
-        <p style="font-size:1.4rem;">{{ settings.stretch_goal }}</p>
-    </div>
-
-    <!-- Daily Needed -->
-    <div style="flex:1 1 150px; min-width:150px; background:#f0f4ff; padding:15px; border-radius:8px; text-align:center; font-weight:600;">
-        ⚡ Daily Needed
-        <p style="font-size:1.4rem;">{{ daily_needed }}</p>
-    </div>
+  <div class="content-card card-wide">
+    <h2 style="margin-top:0;">Quick tips</h2>
+    <p class="hint">Use the + button to add entries fast. Leaderboard updates instantly.</p>
+  </div>
 </div>
 
 <!-- Add Entry Modal -->
-<div id="addModal" class="modal">
-    <div class="modal-content content-card">
-        <h2 style="text-align:center; margin-bottom:20px;">➕ Add Entry</h2>
-        <form method="POST" action="/" style="display:flex; flex-direction:column; gap:15px;">
-            <label>Employee</label>
-            <select name="employee" required>
-                <option value="" disabled selected>Select Employee</option>
-                {% for e in employees %}
-                <option value="{{ e }}">{{ e }}</option>
-                {% endfor %}
-            </select>
+<div id="addModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <span class="close" onclick="closeAddModal()" aria-label="Close">&times;</span>
+    <h2 style="margin-top:0;">Add entry</h2>
+    <form class="form" method="POST" action="/">
+      <div class="form-row">
+        <label for="employee">Employee</label>
+        <select id="employee" name="employee" required>
+          <option value="" disabled selected>Select employee</option>
+          {% for e in employees %}
+            <option value="{{ e }}">{{ e }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-            <label>Date</label>
-            <input type="date" name="date" value="{{ today }}" required>
+      <div class="form-row">
+        <label for="date">Date</label>
+        <input id="date" type="date" name="date" value="{{ today }}" required>
+      </div>
 
-            <label>Shift</label>
-            <select name="shift" required>
-                <option value="" disabled selected>Select Shift</option>
-                {% for s in shifts %}
-                <option value="{{ s }}">{{ s }}</option>
-                {% endfor %}
-            </select>
+      <div class="form-row">
+        <label for="shift">Shift</label>
+        <select id="shift" name="shift" required>
+          <option value="" disabled selected>Select shift</option>
+          {% for s in shifts %}
+            <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-            <label>Hours Worked</label>
-            <input type="number" step="0.01" name="hours" placeholder="e.g., 8" required>
+      <div class="form-row">
+        <label for="hours">Hours worked</label>
+        <input id="hours" type="number" step="0.01" name="hours" placeholder="8.00" required>
+      </div>
 
-            <label>Deals Sold</label>
-            <input type="number" name="deals" placeholder="e.g., 5" required>
+      <div class="form-row">
+        <label for="deals">Deals sold</label>
+        <input id="deals" type="number" name="deals" placeholder="5" required>
+      </div>
 
-            <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
-                <button type="submit" class="submit">Save</button>
-                <button type="button" class="delete" onclick="closeAddModal()">Cancel</button>
-            </div>
-        </form>
-    </div>
+      <div class="form-actions">
+        <button type="button" class="delete" onclick="closeAddModal()">Cancel</button>
+        <button type="submit" class="submit">Save</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 {% endblock %}
@@ -92,20 +104,23 @@
 {% block extra_js %}
 <script>
 function openAddModal() {
-    document.getElementById("addModal").style.display = "flex";
+  var m = document.getElementById('addModal');
+  m.style.display = 'flex';
+  m.setAttribute('aria-hidden','false');
 }
 function closeAddModal() {
-    document.getElementById("addModal").style.display = "none";
+  var m = document.getElementById('addModal');
+  m.style.display = 'none';
+  m.setAttribute('aria-hidden','true');
 }
-
-// Close modal on ESC
 document.addEventListener('keydown', function(event) {
-    if(event.key === "Escape") closeAddModal();
+  if (event.key === 'Escape') closeAddModal();
 });
-
-// Close modal if clicking outside content
-document.getElementById("addModal").addEventListener("click", function(e) {
-    if (e.target === this) closeAddModal();
-});
+var modal = document.getElementById('addModal');
+if (modal) {
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeAddModal();
+  });
+}
 </script>
 {% endblock %}

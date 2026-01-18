@@ -1,13 +1,26 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Security Question</h2>
+<div class="stack">
+  <div class="page-header">
+    <h1>Security question</h1>
+  </div>
 
-<p>{{ question }}</p>
+  <div class="content-card card-tight">
+    <p style="font-weight:800;">{{ question }}</p>
 
-<form method="POST" action="{{ url_for('security_question') }}">
-    <input type="text" name="answer" placeholder="Your answer" required>
-    <button type="submit">Verify</button>
-</form>
+    <form class="form" method="POST" action="{{ url_for('security_question') }}">
+      <div class="form-row">
+        <label for="answer">Your answer</label>
+        <input id="answer" type="text" name="answer" placeholder="Answer" required>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('forgot_password') }}" class="muted">Back</a>
+        <button type="submit" class="submit">Verify</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 {% endblock %}
