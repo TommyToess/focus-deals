@@ -1,105 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>🤖 Ask the Data</h1>
+<h2>Ask the Assistant</h2>
 
-<div class="content-card" style="max-width:700px;margin:auto; font-family:'Helvetica Neue', sans-serif;">
+<div id="chat-box" style="border:1px solid #ccc; padding:10px; height:300px; overflow-y:auto;"></div>
 
-    <!-- Chat Window -->
-    <div id="chat-window" style="
-        max-height:400px;
-        overflow-y:auto;
-        padding:10px;
-        border:1px solid #ddd;
-        margin-bottom:10px;
-        background:#fafafa;
-        border-radius:8px;
-    ">
-        <!-- Messages will be appended here -->
-    </div>
-
-    <!-- Input -->
-    <form id="chat-form" style="display:flex; gap:10px;">
-        <input type="text" id="question" placeholder="Ask about performance..." required style="flex:1; padding:10px; border-radius:5px; border:1px solid #ccc;">
-        <button type="submit" class="submit" style="padding:10px 15px;">Send</button>
-    </form>
-
-    <p id="error-msg" style="color:red; margin-top:10px;"></p>
-</div>
+<form id="chat-form">
+    <input type="text" id="question" placeholder="Ask a question..." required>
+    <button type="submit">Ask</button>
+</form>
 
 <script>
-const chatWindow = document.getElementById('chat-window');
-const form = document.getElementById('chat-form');
-const input = document.getElementById('question');
-const errorMsg = document.getElementById('error-msg');
+const form = document.getElementById("chat-form");
+const chatBox = document.getElementById("chat-box");
 
-function appendMessage(role, content) {
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '8px 0';
-    msgDiv.style.maxWidth = '80%';
-    msgDiv.style.padding = '8px 12px';
-    msgDiv.style.borderRadius = '15px';
-    msgDiv.style.wordBreak = 'break-word';
-    msgDiv.style.fontFamily = "'Helvetica Neue', sans-serif";
-    msgDiv.textContent = content;
-
-    if(role === 'user') {
-        msgDiv.style.background = '#2f80ed';
-        msgDiv.style.color = 'white';
-        msgDiv.style.textAlign = 'right';
-        msgDiv.style.marginLeft = '20%';
-    } else {
-        msgDiv.style.background = '#e0e0e0';
-        msgDiv.style.color = 'black';
-        msgDiv.style.textAlign = 'left';
-        msgDiv.style.marginRight = '20%';
-    }
-
-    chatWindow.appendChild(msgDiv);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-}
-
-// Add typing indicator
-function appendTyping() {
-    const typingDiv = document.createElement('div');
-    typingDiv.id = 'typing';
-    typingDiv.textContent = '...';
-    typingDiv.style.fontStyle = 'italic';
-    typingDiv.style.opacity = '0.6';
-    chatWindow.appendChild(typingDiv);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
-    return typingDiv;
-}
-
-form.addEventListener('submit', async (e) => {
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const question = input.value.trim();
-    if(!question) return;
 
-    appendMessage('user', question);
-    input.value = '';
+    const input = document.getElementById("question");
+    const msg = input.value.trim();
+    if (!msg) return;
 
-    const typingDiv = appendTyping();
+    chatBox.innerHTML += `<p><strong>You:</strong> ${msg}</p>`;
+    input.value = "";
 
-    try {
-        const res = await fetch('{{ url_for("ask_ajax") }}', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({question})
-        });
-        const data = await res.json();
-        if(data.error){
-            errorMsg.textContent = data.error;
-        } else {
-            errorMsg.textContent = '';
-            typingDiv.remove();
-            appendMessage('assistant', data.answer);
-        }
-    } catch(err){
-        typingDiv.remove();
-        errorMsg.textContent = 'AI service unavailable.';
-        console.error(err);
-    }
+    chatBox.innerHTML += `<p id="typing">Assistant is typing<span>.</span><span>.</span><span>.</span></p>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    const res = await fetch("/ask_ajax", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({question: msg})
+    });
+
+    document.getElementById("typing").remove();
+
+    const data = await res.json();
+    chatBox.innerHTML += `<p><strong>Assistant:</strong> ${data.answer}</p>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
 });
 </script>
 

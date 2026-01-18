@@ -1,9 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
-<h3>{{ question }}</h3>
 
-<form method="POST">
+<h2>Security Question</h2>
+
+<p>{{ question }}</p>
+
+<form method="POST" action="{{ url_for('security_question') }}">
     <input type="text" name="answer" placeholder="Your answer" required>
     <button type="submit">Verify</button>
 </form>
+
 {% endblock %}
