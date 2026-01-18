@@ -44,9 +44,13 @@
         </div>
 
         <div class="stat-card">
-            <p>Daily needed</p>
-            <h2>{{ daily_needed }}</h2>
+            <p>Month progress</p>
+            <h2>{{ goal_pct }}%</h2>
+            <p class="muted" style="margin-top:6px;">
+                Goal: {{ goal_pct }}% • Stretch: {{ stretch_pct }}%
+            </p>
         </div>
+
     </div>
 
 </div>

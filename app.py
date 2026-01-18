@@ -367,6 +367,9 @@ def index():
         Entry.date<=settings.current_month_end
     ).all()
     deals_done = sum(e.deals for e in month_entries)
+    goal_pct = round((deals_done / settings.monthly_deal_target) * 100, 1) if settings.monthly_deal_target else 0
+    stretch_pct = round((deals_done / settings.stretch_goal) * 100, 1) if settings.stretch_goal else 0
+
 
     if request.method=="POST":
         e = Entry(
@@ -390,19 +393,25 @@ def index():
         days_remaining=days_remaining,
         daily_needed=daily_needed,
         deals_done=deals_done,
+        goal_pct=goal_pct,
+        stretch_pct=stretch_pct,
         employees=employees,
         shifts=shifts
     )
 
+
 @app.route("/leaderboard")
 def leaderboard():
-    today = datetime.today().date()
-    start_date = request.args.get("start_date", (today - timedelta(days=6)).strftime("%Y-%m-%d"))
-    end_date = request.args.get("end_date", today.strftime("%Y-%m-%d"))
-    start = datetime.strptime(start_date, "%Y-%m-%d").date()
-    end = datetime.strptime(end_date, "%Y-%m-%d").date()
+    s = get_settings()  # <-- uses your settings table
 
-    filtered = Entry.query.filter(Entry.date>=start, Entry.date<=end).all()
+    # Defaults = current month range from settings
+    start_date = request.args.get("start_date", s.current_month_start.strftime("%Y-%m-%d"))
+    end_date   = request.args.get("end_date",   s.current_month_end.strftime("%Y-%m-%d"))
+
+    start = datetime.strptime(start_date, "%Y-%m-%d").date()
+    end   = datetime.strptime(end_date, "%Y-%m-%d").date()
+
+    filtered = Entry.query.filter(Entry.date >= start, Entry.date <= end).all()
     leaderboard_data = build_leaderboard(filtered)
 
     return render_template(
@@ -411,7 +420,7 @@ def leaderboard():
         start_date=start_date,
         end_date=end_date,
         deals_done=sum(e.deals for e in filtered),
-        settings=get_settings()
+        settings=s
     )
 
 @app.route("/history")
