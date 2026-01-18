@@ -1,6 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
 <h3>{{ question }}</h3>
 
 <form method="POST">
     <input type="text" name="answer" placeholder="Your answer" required>
     <button type="submit">Verify</button>
 </form>
+{% endblock %}

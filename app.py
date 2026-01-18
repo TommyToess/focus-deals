@@ -229,17 +229,17 @@ def change_password():
     user = User.query.get(session["user_id"])
 
     if request.method == "POST":
-        new = request.form.get("new_password")
-        confirm = request.form.get("confirm_password")
-        question = request.form.get("security_question")
-        answer = request.form.get("security_answer")
+        new = request.form["new_password"]
+        confirm = request.form["confirm_password"]
+        question = request.form["security_question"]
+        answer = request.form["security_answer"]
 
         if new != confirm:
             flash("Passwords must match", "error")
             return redirect(url_for("change_password"))
 
-        if not question or not answer:
-            flash("Security question and answer required", "error")
+        if question not in SECURITY_QUESTIONS:
+            flash("Invalid security question", "error")
             return redirect(url_for("change_password"))
 
         user.password_hash = generate_password_hash(new)
@@ -248,10 +248,12 @@ def change_password():
         user.must_change_password = False
 
         db.session.commit()
-        flash("Password and security question set", "success")
         return redirect(url_for("index"))
 
-    return render_template("change_password.html")
+    return render_template(
+        "change_password.html",
+        questions=SECURITY_QUESTIONS
+    )
 
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
