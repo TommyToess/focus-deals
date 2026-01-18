@@ -36,6 +36,9 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False)
     must_change_password = db.Column(db.Boolean, default=True)
 
+    security_question = db.Column(db.String(255))
+    security_answer_hash = db.Column(db.String(255))
+
 class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     employee = db.Column(db.String(50), nullable=False)
@@ -228,23 +231,65 @@ def change_password():
     if request.method == "POST":
         new = request.form.get("new_password")
         confirm = request.form.get("confirm_password")
+        question = request.form.get("security_question")
+        answer = request.form.get("security_answer")
 
-        if not new or new != confirm:
+        if new != confirm:
             flash("Passwords must match", "error")
             return redirect(url_for("change_password"))
 
-        user.password_hash = generate_password_hash(new)
-        user.must_change_password = False
-        db.session.commit()
+        if not question or not answer:
+            flash("Security question and answer required", "error")
+            return redirect(url_for("change_password"))
 
-        flash("Password updated successfully", "success")
+        user.password_hash = generate_password_hash(new)
+        user.security_question = question
+        user.security_answer_hash = generate_password_hash(answer.lower().strip())
+        user.must_change_password = False
+
+        db.session.commit()
+        flash("Password and security question set", "success")
         return redirect(url_for("index"))
 
     return render_template("change_password.html")
 
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        username = request.form.get("username")
+        user = User.query.filter_by(username=username).first()
 
-@app.route("/reset_request", methods=["GET", "POST"])
-def reset_request():
+        if not user or not user.security_question:
+            flash("User not found or no security question set", "error")
+            return redirect(url_for("forgot_password"))
+
+        session["reset_user"] = user.id
+        return redirect(url_for("security_question"))
+
+    return render_template("forgot_password.html")
+
+@app.route("/security_question", methods=["GET", "POST"])
+def security_question():
+    user_id = session.get("reset_user")
+    if not user_id:
+        return redirect(url_for("login"))
+
+    user = User.query.get(user_id)
+
+    if request.method == "POST":
+        answer = request.form.get("answer", "").lower().strip()
+
+        if check_password_hash(user.security_answer_hash, answer):
+            session["allow_password_reset"] = True
+            return redirect(url_for("reset_password_secure"))
+
+        flash("Incorrect answer", "error")
+
+    return render_template(
+        "security_question.html",
+        question=user.security_question
+    )
+
     if request.method == "POST":
         username = request.form.get("username")
         user = User.query.filter_by(username=username).first()
@@ -261,32 +306,33 @@ def reset_request():
 
     return render_template("reset_request.html")
 
-@app.route("/reset/<token>", methods=["GET", "POST"])
-def reset_password(token):
-    user_id = verify_reset_token(token)
-
-    if not user_id:
-        flash("Reset link expired or invalid", "error")
+@app.route("/reset_password_secure", methods=["GET", "POST"])
+def reset_password_secure():
+    if not session.get("allow_password_reset"):
         return redirect(url_for("login"))
 
-    user = User.query.get(user_id)
+    user = User.query.get(session["reset_user"])
 
     if request.method == "POST":
         new = request.form.get("new_password")
         confirm = request.form.get("confirm_password")
 
-        if not new or new != confirm:
+        if new != confirm:
             flash("Passwords must match", "error")
-            return redirect(request.url)
+            return redirect(url_for("reset_password_secure"))
 
         user.password_hash = generate_password_hash(new)
         user.must_change_password = False
+
         db.session.commit()
+
+        session.pop("allow_password_reset")
+        session.pop("reset_user")
 
         flash("Password reset successfully", "success")
         return redirect(url_for("login"))
 
-    return render_template("change_password.html")
+    return render_template("reset_password.html")
 
 
 @app.route("/logout")
