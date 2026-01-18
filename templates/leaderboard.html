@@ -1,64 +1,91 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="stack">
-  <div class="page-header">
-    <h1>Leaderboard</h1>
-    <span class="badge">Deals in range: {{ deals_done }}</span>
+<div class="page-container">
+
+  <!-- Header row -->
+  <div class="dashboard-header">
+    <div>
+      <h1>Leaderboard</h1>
+      <p class="muted">
+        Showing: {{ start_date|pretty_date }} – {{ end_date|pretty_date }}
+        <span class="muted-sep">•</span>
+        Ranked by <strong>Deals Per Hour (DPH)</strong>
+      </p>
+    </div>
+
+    <div class="badge">
+      Deals in range: <strong>{{ deals_done }}</strong>
+    </div>
   </div>
 
   <div class="content-card">
-    <form method="get" class="form-inline">
-      <div class="form-row">
-        <label for="start_date">Start date</label>
-        <input id="start_date" type="date" name="start_date" value="{{ start_date }}">
-      </div>
 
+    <!-- Filter Form -->
+    <form method="get" class="form">
       <div class="form-row">
-        <label for="end_date">End date</label>
-        <input id="end_date" type="date" name="end_date" value="{{ end_date }}">
-      </div>
+        <div class="field">
+          <label>Start date</label>
+          <input type="date" name="start_date" value="{{ start_date }}">
+        </div>
 
-      <button type="submit" class="submit">Filter</button>
+        <div class="field">
+          <label>End date</label>
+          <input type="date" name="end_date" value="{{ end_date }}">
+        </div>
+
+        <div class="field field-button">
+          <label>&nbsp;</label>
+          <button type="submit" class="submit">Filter</button>
+        </div>
+      </div>
     </form>
 
-    <div class="table-wrap">
-      <table>
+    <!-- Leaderboard Table -->
+    <div class="table-wrap" style="margin-top: 14px;">
+      <table class="leaderboard-table">
         <thead>
           <tr>
-            <th>Place</th>
+            <th style="width:80px;">Place</th>
             <th>Employee</th>
-            <th>Hours</th>
-            <th>Deals</th>
-            <th>DPH</th>
+            <th style="width:140px;">Hours</th>
+            <th style="width:140px;">Deals</th>
+            <th style="width:140px;">DPH</th>
           </tr>
         </thead>
         <tbody>
-          {% set total_hours = 0 %}
-          {% set total_deals = 0 %}
           {% for row in leaderboard %}
-            {% set total_hours = total_hours + row.hours %}
-            {% set total_deals = total_deals + row.deals %}
-            <tr {% if loop.index == 1 %} style="background-color:#ffd700;" {% endif %}>
-              <td>{{ loop.index }}</td>
-              <td>
-                <a href="{{ url_for('employee_profile', name=row.employee) }}">
-                  {{ row.employee }}
-                </a>
-              </td>
-              <td>{{ row.hours|round(2) }}</td>
-              <td>{{ row.deals }}</td>
-              <td>{% if row.hours>0 %}{{ (row.deals/row.hours)|round(2) }}{% else %}0{% endif %}</td>
-            </tr>
+          <tr class="
+              {% if loop.index == 1 %} rank-1
+              {% elif loop.index == 2 %} rank-2
+              {% elif loop.index == 3 %} rank-3
+              {% endif %}
+            ">
+            <td>{{ loop.index }}</td>
+            <td>
+              <a href="{{ url_for('employee_profile', name=row.employee) }}">
+                {{ row.employee }}
+              </a>
+            </td>
+            <td>{{ row.hours|round(2) }}</td>
+            <td>{{ row.deals }}</td>
+            <td>
+              {{ row.dph }}
+              <div class="subtle-note">{{ row.hours|round(2) }} hrs logged</div>
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
-    <p class="hint" style="margin-top:12px;">
-      Monthly target: {{ deals_done }} / {{ settings.monthly_deal_target }} deals. 
+    <p class="muted" style="margin-top: 14px;">
+      Monthly target: {{ deals_done }} / {{ settings.monthly_deal_target }} deals.
       Stretch: {{ deals_done }} / {{ settings.stretch_goal }} deals.
+      <br>
+      <span class="small-note">Tip: For contests, consider a minimum-hours qualifier to keep DPH fair.</span>
     </p>
+
   </div>
 </div>
 
