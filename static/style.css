@@ -835,3 +835,89 @@ canvas {
   border-radius: 10px;
   border: 1px solid #d7dce3;
 }
+
+/* ---------- Full-width schedule layout ---------- */
+
+.page-full-width {
+  max-width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.schedule-card {
+  padding: 12px;
+}
+
+.no-horizontal-scroll {
+  overflow-x: hidden;
+}
+
+/* Make table stretch evenly */
+.schedule-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.emp-col {
+  width: 160px;
+}
+
+.day-col {
+  width: calc((100% - 160px) / 7);
+}
+
+/* Cells */
+.schedule-cell {
+  padding: 8px;
+}
+
+.schedule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Time inputs stay compact */
+.time-row {
+  display: flex;
+  gap: 4px;
+}
+
+.time-row input[type="time"] {
+  width: 100%;
+  padding: 6px;
+  font-size: 0.9rem;
+}
+
+.dash {
+  font-weight: 600;
+  opacity: 0.6;
+}
+
+/* Role dropdown */
+.schedule-form select {
+  width: 100%;
+  padding: 6px;
+  font-size: 0.9rem;
+}
+
+/* Buttons */
+.mini-save {
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* View-only note */
+.view-only-note {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  padding-top: 4px;
+}
+
+/* Tighten rows so everything fits */
+.schedule-table th,
+.schedule-table td {
+  vertical-align: top;
+}
