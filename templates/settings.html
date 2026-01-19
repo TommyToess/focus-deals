@@ -34,6 +34,15 @@
     </form>
 
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
+    {% if session.get('is_admin') %}
+    <div class="settings-section">
+        <h3>Admin Tools</h3>
+
+        <a href="{{ url_for('admin_users') }}" class="btn btn-primary">
+            👥 Manage Users
+        </a>
+    </div>
+    {% endif %}
 
     <form action="{{ url_for('finalize_month') }}" method="post" class="form">
       <p class="hint">Finalize saves the current month totals into the month comparison table.</p>

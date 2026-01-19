@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from itsdangerous import URLSafeTimedSerializer
+import secrets
 
 from openai import OpenAI
 client = OpenAI()
@@ -140,6 +141,87 @@ SECURITY_QUESTIONS = [
 undo_stack = []
 
 # ---------- Routes ----------
+
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    users = User.query.order_by(User.username).all()
+    return render_template("admin_users.html", users=users)
+
+
+@app.route("/admin/users/create", methods=["POST"])
+@admin_required
+def create_user():
+    username = request.form["username"]
+    password = request.form.get("password")
+    is_admin = "is_admin" in request.form
+
+    if User.query.filter_by(username=username).first():
+        flash("Username already exists")
+        return redirect(url_for("admin_users"))
+
+    if not password:
+        password = secrets.token_urlsafe(8)
+        flash(f"Temporary password: {password}")
+
+    user = User(
+        username=username,
+        is_admin=is_admin,
+        must_change_password=True
+    )
+    user.set_password(password)
+
+    db.session.add(user)
+    db.session.commit()
+
+    flash("User created")
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/users/<int:user_id>/update", methods=["POST"])
+@admin_required
+def update_user(user_id):
+    user = User.query.get_or_404(user_id)
+
+    user.username = request.form["username"]
+    user.is_admin = "is_admin" in request.form
+    user.must_change_password = "must_change_password" in request.form
+
+    db.session.commit()
+    flash("User updated")
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/users/<int:user_id>/reset_password", methods=["POST"])
+@admin_required
+def reset_user_password(user_id):
+    user = User.query.get_or_404(user_id)
+
+    temp_password = secrets.token_urlsafe(8)
+    user.set_password(temp_password)
+    user.must_change_password = True
+
+    db.session.commit()
+    flash(f"Temporary password: {temp_password}")
+
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    if user_id == session.get("user_id"):
+        flash("You cannot delete yourself")
+        return redirect(url_for("admin_users"))
+
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+
+    flash("User deleted")
+    return redirect(url_for("admin_users"))
+
+
 @app.route("/schedule")
 def schedule():
     today = datetime.today().date()
@@ -613,6 +695,7 @@ def get_entry(id):
 
 
 @app.route("/edit_entry/<int:id>", methods=["POST"])
+@admin_required
 def edit_entry(id):
     e = Entry.query.get_or_404(id)
     data = request.get_json()
@@ -625,6 +708,7 @@ def edit_entry(id):
     return "", 200
 
 @app.route("/delete/<int:id>")
+@admin_required
 def delete_entry(id):
     e = Entry.query.get_or_404(id)
     undo_stack.append(e)
