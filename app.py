@@ -86,6 +86,11 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
+def get_week_start_saturday(d):
+    # Python weekday: Mon=0 ... Sun=6, Saturday=5
+    offset = (d.weekday() - 5) % 7
+    return d - timedelta(days=offset)
+
 def get_settings():
     s = Setting.query.first()
     if not s:
