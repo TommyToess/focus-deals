@@ -211,6 +211,41 @@ def schedule_set():
     db.session.commit()
     return redirect(url_for("schedule", week_start=request.form.get("week_start")))
 
+    employee = request.form["employee"]
+    date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
+
+    start_raw = request.form.get("start_time", "").strip()
+    end_raw = request.form.get("end_time", "").strip()
+    role = request.form.get("role", "").strip() or None
+
+    # If no times, treat as Off (delete)
+    if not start_raw or not end_raw:
+        existing = ScheduleShift.query.filter_by(employee=employee, date=date).first()
+        if existing:
+            db.session.delete(existing)
+            db.session.commit()
+        return redirect(url_for("schedule", week_start=request.form.get("week_start")))
+
+    start_time = datetime.strptime(start_raw, "%H:%M").time()
+    end_time = datetime.strptime(end_raw, "%H:%M").time()
+
+    existing = ScheduleShift.query.filter_by(employee=employee, date=date).first()
+    if existing:
+        existing.start_time = start_time
+        existing.end_time = end_time
+        existing.role = role
+    else:
+        db.session.add(ScheduleShift(
+            employee=employee,
+            date=date,
+            start_time=start_time,
+            end_time=end_time,
+            role=role
+        ))
+
+    db.session.commit()
+    return redirect(url_for("schedule", week_start=request.form.get("week_start")))
+
 @app.route("/employee/<name>")
 def employee_profile(name):
     s = get_settings()
