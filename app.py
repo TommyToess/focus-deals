@@ -32,7 +32,7 @@ db = SQLAlchemy(app)
 
 # ---------- Models ----------
 
-class User(db.Model):
+class Users(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
@@ -164,7 +164,12 @@ def admin_schedule():
     shifts = ScheduleShift.query.filter(ScheduleShift.date >= week_start, ScheduleShift.date <= week_end).all()
     grid = {(s.employee, s.date): s for s in shifts}
 
-    employees = ["Sarah","Angie","Beth","Terry","Jeff","Vernon"]
+    users = db.execute("""
+        SELECT id, display_name
+        FROM users
+        WHERE is_admin = 0
+        ORDER BY display_name
+        """).fetchall()
     roles = ["Cashier", "Assistant Manager", "Store Manager", "Shift Lead"]
 
     prev_week = (week_start - timedelta(days=7)).strftime("%Y-%m-%d")
@@ -205,7 +210,7 @@ def admin_history():
 @app.route("/admin/users")
 @admin_required
 def admin_users():
-    users = User.query.order_by(User.username).all()
+    users = Users.query.order_by(Users.username).all()
     return render_template("admin_users.html", users=users)
 
 @app.route("/admin/users/create", methods=["POST"])
@@ -215,7 +220,7 @@ def create_user():
     password = request.form.get("password")
     is_admin = "is_admin" in request.form
 
-    if User.query.filter_by(username=username).first():
+    if Users.query.filter_by(username=username).first():
         flash("Username already exists")
         return redirect(url_for("admin_users"))
 
@@ -223,7 +228,7 @@ def create_user():
         password = secrets.token_urlsafe(8)
         flash(f"Temporary password: {password}")
 
-    user = User(
+    user = Users(
         username=username,
         is_admin=is_admin,
         must_change_password=True
@@ -239,7 +244,7 @@ def create_user():
 @app.route("/admin/users/<int:user_id>/update", methods=["POST"])
 @admin_required
 def update_user(user_id):
-    user = User.query.get_or_404(user_id)
+    user = Users.query.get_or_404(user_id)
 
     user.username = request.form["username"]
     user.is_admin = "is_admin" in request.form
@@ -252,7 +257,7 @@ def update_user(user_id):
 @app.route("/admin/users/<int:user_id>/reset_password", methods=["POST"])
 @admin_required
 def reset_user_password(user_id):
-    user = User.query.get_or_404(user_id)
+    user = Users.query.get_or_404(user_id)
 
     temp_password = secrets.token_urlsafe(8)
 
@@ -280,7 +285,7 @@ def delete_user(user_id):
         flash("You cannot delete yourself")
         return redirect(url_for("admin_users"))
 
-    user = User.query.get_or_404(user_id)
+    user = Users.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
 
@@ -500,7 +505,7 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        user = User.query.filter_by(username=username).first()
+        user = Users.query.filter_by(username=username).first()
 
         if user and check_password_hash(user.password_hash, password):
             session["user_id"] = user.id
@@ -521,7 +526,7 @@ def change_password():
     if not session.get("logged_in"):
         return redirect(url_for("login"))
 
-    user = User.query.get(session["user_id"])
+    user = Users.query.get(session["user_id"])
 
     # Only require security setup if they don't have it yet
     needs_security_setup = not user.security_question or not user.security_answer_hash
@@ -568,7 +573,7 @@ def change_password():
 def forgot_password():
     if request.method == "POST":
         username = request.form.get("username")
-        user = User.query.filter_by(username=username).first()
+        user = Users.query.filter_by(username=username).first()
 
         if not user or not user.security_question:
             flash("User not found or no security question set", "error")
@@ -585,7 +590,7 @@ def security_question():
     if not user_id:
         return redirect(url_for("login"))
 
-    user = User.query.get(user_id)
+    user = Users.query.get(user_id)
 
     if request.method == "POST":
         answer = request.form.get("answer", "").lower().strip()
@@ -622,7 +627,7 @@ def reset_password_secure():
     if not session.get("allow_password_reset"):
         return redirect(url_for("login"))
 
-    user = User.query.get(session["reset_user"])
+    user = Users.query.get(session["reset_user"])
 
     if request.method == "POST":
         new = request.form.get("new_password")
