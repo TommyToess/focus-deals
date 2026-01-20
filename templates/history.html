@@ -112,7 +112,6 @@ function openEditModal(id){
       document.getElementById('editShift').value = entry.shift;
       document.getElementById('editHours').value = entry.hours;
       document.getElementById('editDeals').value = entry.deals;
-      document.getElementById('modalDeleteForm').action = `/delete/${entry.id}`;
       var m = document.getElementById('editModal');
       m.style.display = 'flex';
       m.setAttribute('aria-hidden','false');
