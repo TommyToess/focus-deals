@@ -3,6 +3,19 @@
    Includes: Admin dashboard tiles + user mgmt + schedule editable/view
    ================================ */
 
+/* Prevent "mystery" horizontal scrolling from padding/width calculations */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Keep media + widgets from overflowing their containers on small screens */
+img, video, canvas, svg, table { max-width: 100%; }
+input, select, button, textarea { max-width: 100%; }
+
+
 /* ---------- App Layout ---------- */
 body {
   margin: 0;
@@ -632,6 +645,84 @@ canvas {
   opacity: 0.85;
   padding-top: 2px;
 }
+
+/* --- Schedule: responsive "no horizontal scroll" layout ---
+   On small screens, the schedule table becomes stacked employee cards.
+   This avoids left-right scrolling while staying readable.
+*/
+@media (max-width: 860px) {
+  .schedule-card { padding: 10px; }
+
+  /* Let the wrapper show everything (we won't need horizontal scroll) */
+  .table-wrap.no-horizontal-scroll { overflow-x: visible; }
+
+  .schedule-table,
+  .schedule-table thead,
+  .schedule-table tbody,
+  .schedule-table th,
+  .schedule-table td,
+  .schedule-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .schedule-table thead { display: none; }
+
+  .schedule-table tr {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0 0 12px;
+  }
+
+  .schedule-table td {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 12px;
+    text-align: left;
+    border-top: 1px solid #eef2f7;
+  }
+
+  .schedule-table td::before {
+    content: attr(data-label);
+    flex: 0 0 120px;
+    font-weight: 800;
+    color: #6b7280;
+  }
+
+  /* Employee header row inside each card */
+  .schedule-table td.emp-name {
+    background: #f5f6fa;
+    border-top: none;
+    font-weight: 900;
+  }
+
+  .schedule-table td.emp-name::before {
+    content: "Employee";
+    color: #6b7280;
+  }
+
+  /* Make the contents fill the available space */
+  .schedule-table td .schedule-form,
+  .schedule-table td .view-only-note {
+    width: 100%;
+  }
+
+  /* Editable cell inputs: stack nicely */
+  .time-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .dash { display: none; }
+
+  .mini-save { width: 100%; }
+}
+
 
 /* =========================================================
    ADMIN – Users page (checkbox sizing + actions)
