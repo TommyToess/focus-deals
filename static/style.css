@@ -921,3 +921,63 @@ canvas {
 .schedule-table td {
   vertical-align: top;
 }
+
+/* ---------- Admin User Management ---------- */
+
+.user-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+    flex-wrap: wrap;
+}
+
+.user-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.user-form input[type="text"] {
+    min-width: 160px;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+/* Buttons */
+.btn-primary {
+    background: #6c4ef6;
+    color: white;
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+}
+
+.btn-danger {
+    background: #e53935;
+    color: white;
+}
+
+.user-row button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+/* Mobile stacking */
+@media (max-width: 700px) {
+    .user-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

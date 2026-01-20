@@ -21,39 +21,42 @@
     <h3>Existing Users</h3>
 
     {% for user in users %}
-    <form method="POST" action="{{ url_for('update_user', user_id=user.id) }}" class="user-row">
-        <input type="text" name="username" value="{{ user.username }}" required>
+    <div class="user-row">
 
-        <label>
-            <input type="checkbox" name="is_admin" {% if user.is_admin %}checked{% endif %}>
-            Admin
-        </label>
+        <form method="POST" action="{{ url_for('update_user', user_id=user.id) }}" class="user-form">
+            <input type="text" name="username" value="{{ user.username }}" required>
 
-        <label>
-            <input type="checkbox" name="must_change_password"
-                   {% if user.must_change_password %}checked{% endif %}>
-            Force password change
-        </label>
+            <label class="checkbox">
+                <input type="checkbox" name="is_admin"
+                       {% if user.is_admin %}checked{% endif %}>
+                Admin
+            </label>
 
-        <button type="submit">Save</button>
-    </form>
+            <label class="checkbox">
+                <input type="checkbox" name="must_change_password"
+                       {% if user.must_change_password %}checked{% endif %}>
+                Force password change
+            </label>
 
-    <form method="POST"
-          action="{{ url_for('reset_user_password', user_id=user.id) }}"
-          style="display:inline;">
-        <button type="submit">Reset Password</button>
-    </form>
+            <button type="submit" class="btn-primary">Save</button>
+        </form>
 
-    {% if user.id != session.get('user_id') %}
-    <form method="POST"
-          action="{{ url_for('delete_user', user_id=user.id) }}"
-          style="display:inline;"
-          onsubmit="return confirm('Delete this user?');">
-        <button type="submit">Delete</button>
-    </form>
-    {% endif %}
-    <hr>
+        <form method="POST"
+              action="{{ url_for('reset_user_password', user_id=user.id) }}">
+            <button type="submit" class="btn-secondary">Reset Password</button>
+        </form>
+
+        {% if user.id != session.get('user_id') %}
+        <form method="POST"
+              action="{{ url_for('delete_user', user_id=user.id) }}"
+              onsubmit="return confirm('Delete this user?');">
+            <button type="submit" class="btn-danger">Delete</button>
+        </form>
+        {% endif %}
+
+    </div>
     {% endfor %}
 </div>
+
 
 {% endblock %}
