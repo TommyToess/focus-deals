@@ -528,7 +528,11 @@ def login():
             session["logged_in"] = True
 
             if user.must_change_password:
-                return redirect(url_for("change_password"))
+                # allow reset page to load for this user
+                session["allow_password_reset"] = True
+                session["reset_user"] = user.id
+                return redirect(url_for("reset_password_secure"))
+
 
             return redirect(url_for("index"))
 
@@ -536,54 +540,6 @@ def login():
         return render_template("login.html"), 401
 
     return render_template("login.html")
-
-@app.route("/change_password", methods=["GET", "POST"])
-def change_password():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
-
-    user = Users.query.get(session["user_id"])
-
-    # Only require security setup if they don't have it yet
-    needs_security_setup = not user.security_question or not user.security_answer_hash
-
-    if request.method == "POST":
-        new = request.form.get("new_password", "")
-        confirm = request.form.get("confirm_password", "")
-
-        if new != confirm:
-            flash("Passwords must match", "error")
-            return redirect(url_for("change_password"))
-
-        # If they need security setup, require it. Otherwise, ignore it.
-        if needs_security_setup:
-            question = request.form.get("security_question", "")
-            answer = request.form.get("security_answer", "")
-
-            if question not in SECURITY_QUESTIONS:
-                flash("Invalid security question", "error")
-                return redirect(url_for("change_password"))
-
-            if not answer.strip():
-                flash("Security answer is required", "error")
-                return redirect(url_for("change_password"))
-
-            user.security_question = question
-            user.security_answer_hash = generate_password_hash(answer.lower().strip())
-
-        # Always update password
-        user.password_hash = generate_password_hash(new)
-        user.must_change_password = False
-
-        db.session.commit()
-        flash("Password updated", "success")
-        return redirect(url_for("index"))
-
-    return render_template(
-        "change_password.html",
-        questions=SECURITY_QUESTIONS,
-        needs_security_setup=needs_security_setup
-    )
 
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
@@ -638,33 +594,52 @@ def security_question():
 
     return render_template("reset_request.html")
 
+from werkzeug.security import generate_password_hash
+
 @app.route("/reset_password_secure", methods=["GET", "POST"])
 def reset_password_secure():
-    # If session died between steps, you’ll get bounced here
     if not session.get("allow_password_reset") or not session.get("reset_user"):
-        flash("Reset session expired. Please start the reset again.", "error")
-        return redirect(url_for("forgot_password"))
+        flash("Reset session expired. Please start again.", "error")
+        return redirect(url_for("login"))
 
     user = Users.query.get(session.get("reset_user"))
     if not user:
         session.pop("allow_password_reset", None)
         session.pop("reset_user", None)
-        flash("That account no longer exists. Start the reset again.", "error")
-        return redirect(url_for("forgot_password"))
+        flash("User not found.", "error")
+        return redirect(url_for("login"))
+
+    # Define “needs security setup” however your app currently does it.
+    # Common pattern:
+    needs_security_setup = (not user.security_question) or (not user.security_answer_hash)
 
     if request.method == "POST":
-        app.logger.info("reset_password_secure POST received for user_id=%s", user.id)
+        # If first-time setup, require question+answer
+        if needs_security_setup:
+            q = (request.form.get("security_question") or "").strip()
+            a = (request.form.get("security_answer") or "").strip()
+            if not q or not a:
+                flash("Security question and answer are required.", "error")
+                return render_template("reset_password.html", needs_security_setup=True, questions=SECURITY_QUESTIONS)
+
+            user.security_question = q
+            user.security_answer_hash = generate_password_hash(a)
+
+            # Optional: set display name here too if you want
+            dn = (request.form.get("display_name") or "").strip()
+            if dn:
+                user.display_name = dn
 
         new = (request.form.get("new_password") or "").strip()
         confirm = (request.form.get("confirm_password") or "").strip()
 
         if not new:
             flash("Password is required.", "error")
-            return render_template("reset_password.html")
+            return render_template("reset_password.html", needs_security_setup=needs_security_setup, questions=SECURITY_QUESTIONS)
 
         if new != confirm:
-            flash("Passwords must match.", "error")
-            return render_template("reset_password.html")
+            flash("Passwords must match", "error")
+            return render_template("reset_password.html", needs_security_setup=needs_security_setup, questions=SECURITY_QUESTIONS)
 
         user.password_hash = generate_password_hash(new)
         user.must_change_password = False
@@ -673,10 +648,19 @@ def reset_password_secure():
         session.pop("allow_password_reset", None)
         session.pop("reset_user", None)
 
-        flash("Password reset successfully. Please log in.", "success")
+        # If they’re already logged in (forced reset), keep them logged in
+        if session.get("logged_in") and session.get("user_id") == user.id:
+            flash("Password updated.", "success")
+            return redirect(url_for("index"))
+
+        flash("Password reset successfully", "success")
         return redirect(url_for("login"))
 
-    return render_template("reset_password.html")
+    return render_template(
+        "reset_password.html",
+        needs_security_setup=needs_security_setup,
+        questions=SECURITY_QUESTIONS,
+    )
 
 @app.route("/logout")
 def logout():
