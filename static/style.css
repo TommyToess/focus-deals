@@ -1034,3 +1034,7 @@ canvas {
   background: #dc2626;
   color: white;
 }
+
+.admin-users-page .card-wide {
+  max-width: 980px; /* matches .page max-width */
+}
