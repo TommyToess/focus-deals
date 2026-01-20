@@ -191,21 +191,29 @@ def update_user(user_id):
     flash("User updated")
     return redirect(url_for("admin_users"))
 
-
 @app.route("/admin/users/<int:user_id>/reset_password", methods=["POST"])
 @admin_required
 def reset_user_password(user_id):
     user = User.query.get_or_404(user_id)
 
     temp_password = secrets.token_urlsafe(8)
-    user.set_password(temp_password)
-    user.must_change_password = True
+
+    # Write the hash into whichever field your User model actually has
+    if hasattr(user, "password_hash"):
+        user.password_hash = generate_password_hash(temp_password)
+    elif hasattr(user, "password"):
+        user.password = generate_password_hash(temp_password)
+    else:
+        raise RuntimeError("User model missing password_hash/password field")
+
+    # Force password change if the column exists
+    if hasattr(user, "must_change_password"):
+        user.must_change_password = True
 
     db.session.commit()
-    flash(f"Temporary password: {temp_password}")
 
+    flash(f"Temporary password for {user.username}: {temp_password}", "success")
     return redirect(url_for("admin_users"))
-
 
 @app.route("/admin/users/<int:user_id>/delete", methods=["POST"])
 @admin_required
