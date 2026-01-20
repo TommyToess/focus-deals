@@ -37,6 +37,8 @@ class Users(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
+    display_name = db.Column(db.String(100), nullable=False)
+
     password_hash = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     must_change_password = db.Column(db.Boolean, default=True)
@@ -230,7 +232,7 @@ def create_user():
         username=username,
         display_name=display_name,
         is_admin=is_admin,
-        must_change_password=True,
+        must_change_password=True
     )
     user.password_hash = generate_password_hash(password)
 
@@ -502,12 +504,25 @@ def clear_chat():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = (request.form.get("username") or "").strip().lower()
+        password = request.form.get("password") or ""
 
         user = Users.query.filter_by(username=username).first()
 
-        if user and check_password_hash(user.password_hash, password):
+        # If user not found OR hash missing, fail cleanly (no exception)
+        if not user or not user.password_hash:
+            flash("Invalid username or password", "error")
+            return render_template("login.html"), 401
+
+        try:
+            ok = check_password_hash(user.password_hash, password)
+        except ValueError:
+            # This means the stored hash is malformed (common if it was saved wrong / empty)
+            app.logger.exception("Invalid password hash for user_id=%s username=%s", user.id, user.username)
+            flash("This account password is corrupted. Ask an admin to reset it.", "error")
+            return render_template("login.html"), 400
+
+        if ok:
             session["user_id"] = user.id
             session["is_admin"] = user.is_admin
             session["logged_in"] = True
@@ -518,6 +533,7 @@ def login():
             return redirect(url_for("index"))
 
         flash("Invalid username or password", "error")
+        return render_template("login.html"), 401
 
     return render_template("login.html")
 
@@ -608,7 +624,7 @@ def security_question():
 
     if request.method == "POST":
         username = request.form.get("username")
-        user = User.query.filter_by(username=username).first()
+        user = Users.query.filter_by(username=username).first()
 
         if user:
             token = generate_reset_token(user.id)
