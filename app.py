@@ -640,8 +640,9 @@ def security_question():
 
 @app.route("/reset_password_secure", methods=["GET", "POST"])
 def reset_password_secure():
-    if not session.get("allow_password_reset"):
-        return redirect(url_for("login"))
+    if not session.get("allow_password_reset") or not session.get("reset_user"):
+        flash("Reset session expired. Please start the reset again.", "error")
+        return redirect(url_for("forgot_password"))
 
     user = Users.query.get(session["reset_user"])
 
@@ -658,8 +659,8 @@ def reset_password_secure():
 
         db.session.commit()
 
-        session.pop("allow_password_reset")
-        session.pop("reset_user")
+        session.pop("allow_password_reset", None)
+        session.pop("reset_user", None)
 
         flash("Password reset successfully", "success")
         return redirect(url_for("login"))
