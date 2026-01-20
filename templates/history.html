@@ -33,7 +33,10 @@
             <td>
               <div class="row" style="justify-content:center; flex-wrap: wrap;">
                 <button type="button" class="submit" onclick="openEditModal({{ entry.id }})">Edit</button>
-                <a href="{{ url_for('delete_entry', id=entry.id) }}"><button type="button" class="delete">Delete</button></a>
+                <form method="POST" action="{{ url_for('delete_entry', id=entry.id) }}"
+                      onsubmit="return confirm('Delete this entry?');" style="display:inline;">
+                  <button type="submit" class="delete">Delete</button>
+                </form>
               </div>
             </td>
           </tr>
@@ -50,7 +53,7 @@
     <span class="close" onclick="closeEditModal()" aria-label="Close">&times;</span>
     <h2 style="margin-top:0;">Edit entry</h2>
 
-    <form id="editForm" class="form">
+    <button type="submit" class="submit">Save</button>
       <input type="hidden" name="id" id="editId">
 
       <div class="form-row">
@@ -88,10 +91,13 @@
 
       <div class="form-actions">
         <button type="button" class="delete" onclick="closeEditModal()">Cancel</button>
-        <form method="POST" action="{{ url_for('delete_entry', id=entry.id) }}"
+
+        <form id="modalDeleteForm" method="POST"
               onsubmit="return confirm('Delete this entry?');" style="display:inline;">
           <button type="submit" class="delete">Delete</button>
         </form>
+
+        <button type="submit" class="submit">Save</button>
       </div>
     </form>
   </div>
@@ -106,8 +112,7 @@ function openEditModal(id){
     .then(res => res.json())
     .then(entry => {
       document.getElementById('editEmployee').value = entry.employee;
-
-      document.getElementById('editEmployee').value = display_name(entry.employee);
+      document.getElementById('editId').value = entry.id;
       document.getElementById('editDate').value = entry.date;
       document.getElementById('editShift').value = entry.shift;
       document.getElementById('editHours').value = entry.hours;
