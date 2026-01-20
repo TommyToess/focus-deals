@@ -139,6 +139,9 @@ SECURITY_QUESTIONS = [
     "What is your favorite movie?"
 ]
 
+# ---------- Undo Stack ----------
+undo_stack = []
+
 # ---------- Routes ----------
 
 @app.route("/admin")
