@@ -366,7 +366,7 @@ canvas {
 }
 
 /* modal forms */
-.modal-content form,
+.modal-content form.form,
 .modal-form {
   display: flex;
   flex-direction: column;
