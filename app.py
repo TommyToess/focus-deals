@@ -217,7 +217,12 @@ def admin_settings():
 def admin_history():
     entries = Entry.query.order_by(Entry.date.desc()).all()
     users = Users.query.order_by(Users.display_name).all()
-    return render_template("history.html", entries=entries, users=users, can_undo=len(undo_stack) > 0)
+    return render_template(
+        "history.html",
+        entries=entries,
+        users=users,
+        can_undo=len(undo_stack) > 0
+    )
 
 @app.route("/admin/users")
 @admin_required
