@@ -84,16 +84,16 @@
         <input type="number" step="0.01" name="hours" id="editHours" required>
       </div>
 
+      <div class="form-row">
+        <label for="editDeals">Deals</label>
+        <input type="number" name="deals" id="editDeals" required>
+      </div>
+
       <div class="modal-actions">
         <button type="button" class="submit secondary" onclick="closeEditModal()">Cancel</button>
         <button type="submit" class="submit">Save</button>
       </div>
       </form>
-
-      <div class="form-row">
-        <label for="editDeals">Deals</label>
-        <input type="number" name="deals" id="editDeals" required>
-      </div>
 
       <form id="modalDeleteForm" method="POST" class="modal-actions danger-row"
             onsubmit="return confirm('Delete this entry?');">
