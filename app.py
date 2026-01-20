@@ -33,6 +33,8 @@ db = SQLAlchemy(app)
 # ---------- Models ----------
 
 class Users(db.Model):
+    __tablename__ = "users"
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
@@ -216,29 +218,31 @@ def admin_users():
 @app.route("/admin/users/create", methods=["POST"])
 @admin_required
 def create_user():
-    username = request.form["username"]
+    username = request.form["username"].strip().lower()
+    display_name = request.form.get("display_name", "").strip() or username
     password = request.form.get("password")
     is_admin = "is_admin" in request.form
 
     if Users.query.filter_by(username=username).first():
-        flash("Username already exists")
+        flash("Username already exists", "error")
         return redirect(url_for("admin_users"))
 
     if not password:
         password = secrets.token_urlsafe(8)
-        flash(f"Temporary password: {password}")
+        flash(f"Temporary password: {password}", "success")
 
     user = Users(
         username=username,
+        display_name=display_name,
         is_admin=is_admin,
-        must_change_password=True
+        must_change_password=True,
     )
     user.password_hash = generate_password_hash(password)
 
     db.session.add(user)
     db.session.commit()
 
-    flash("User created")
+    flash("User created", "success")
     return redirect(url_for("admin_users"))
 
 @app.route("/admin/users/<int:user_id>/update", methods=["POST"])
@@ -246,12 +250,13 @@ def create_user():
 def update_user(user_id):
     user = Users.query.get_or_404(user_id)
 
-    user.username = request.form["username"]
+    user.username = request.form["username"].strip().lower()
+    user.display_name = request.form.get("display_name", "").strip() or user.username
     user.is_admin = "is_admin" in request.form
     user.must_change_password = "must_change_password" in request.form
 
     db.session.commit()
-    flash("User updated")
+    flash("User updated", "success")
     return redirect(url_for("admin_users"))
 
 @app.route("/admin/users/<int:user_id>/reset_password", methods=["POST"])
@@ -313,7 +318,7 @@ def schedule():
     # Map (employee, date) -> shift record
     grid = {(s.employee, s.date): s for s in shifts}
 
-    employees = ["Sarah","Angie","Beth","Terry","Jeff","Vernon"]
+    employees = Users.query.filter_by(is_admin=False).order_by(Users.display_name).all()
     roles = ["Cashier", "Assistant Manager", "Store Manager", "Shift Lead"]
 
     prev_week = (week_start - timedelta(days=7)).strftime("%Y-%m-%d")
