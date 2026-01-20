@@ -13,7 +13,12 @@
     <form method="POST" action="{{ url_for('create_user') }}" class="form">
       <div class="form-row">
         <label for="new_username">Username</label>
-        <input id="new_username" type="text" name="username" placeholder="Username" required>
+        <input id="new_username" type="text" name="username" placeholder="username" required>
+      </div>
+
+      <div class="form-row">
+        <label for="new_display_name">Display name</label>
+        <input id="new_display_name" type="text" name="display_name" placeholder="What shows in the app (optional)">
       </div>
 
       <div class="form-row">
@@ -45,6 +50,12 @@
           <div class="form-row">
             <label for="u{{ user.id }}_username">Username</label>
             <input id="u{{ user.id }}_username" type="text" name="username" value="{{ user.username }}" required>
+          </div>
+
+          <div class="form-row">
+            <label for="u{{ user.id }}_display_name">Display name</label>
+            <input id="u{{ user.id }}_display_name" type="text" name="display_name"
+                   value="{{ user.display_name or user.username }}">
           </div>
 
           <div class="form-row checkbox-row">
