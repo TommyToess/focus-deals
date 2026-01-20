@@ -789,7 +789,7 @@ canvas {
   background: #f1f5ff;
   color: #1f2937;
   font-weight: 700;
-  text-align: center;
+  text-align: left;
   text-decoration: none;
   transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
 }
