@@ -981,3 +981,56 @@ canvas {
         align-items: flex-start;
     }
 }
+
+/* ---- Admin Users page checkbox + actions fixes ---- */
+
+/* Put checkboxes on one line and stop them from stretching */
+.checkbox-row {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Make checkbox + label inline and normal sized */
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+/* This is the key: override any global input styling */
+.checkbox-inline input[type="checkbox"] {
+  width: auto !important;
+  height: auto !important;
+  min-width: 16px;
+  min-height: 16px;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Optional: make each user look like a neat card section */
+.user-card {
+  padding: 12px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Actions row spacing */
+.user-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Optional button variants if your CSS doesn't have them */
+.submit.secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.submit.danger {
+  background: #dc2626;
+  color: white;
+}
