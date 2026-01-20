@@ -4,23 +4,6 @@
 <div class="stack">
   <div class="page-header">
     <h1>Admin</h1>
-    <div class="muted">Administration panel</div>
-  </div>
-
-  <!-- Quick links -->
-  <div class="content-card card-wide">
-    <h3 style="margin-top:0;">Quick Actions</h3>
-
-    <div class="admin-actions">
-      <a href="{{ url_for('admin_settings') }}" class="admin-tile">⚙️ Settings</a>
-      <a href="{{ url_for('admin_history') }}" class="admin-tile">📜 History</a>
-      <a href="{{ url_for('admin_schedule') }}" class="admin-tile">🗓️ Edit Schedule</a>
-      <a href="{{ url_for('admin_users') }}" class="admin-tile">👥 Manage Users</a>
-    </div>
-
-    <p class="hint" style="margin-top:12px;">
-      The normal Schedule tab is view-only. Use <b>Edit Schedule</b> here to make changes.
-    </p>
   </div>
 
   <!-- Current settings preview -->
@@ -33,11 +16,17 @@
       <div class="badge">Target: {{ settings.monthly_deal_target }}</div>
       <div class="badge">Stretch: {{ settings.stretch_goal }}</div>
     </div>
+  </div>
 
-    <div class="form-actions" style="margin-top:12px;">
-      <a href="{{ url_for('admin_settings') }}" class="submit" style="text-decoration:none; display:inline-block;">
-        Edit Settings
-      </a>
+  <!-- Quick links -->
+  <div class="content-card card-wide">
+    <h3 style="margin-top:0;">Quick Actions</h3>
+
+    <div class="admin-actions">
+      <a href="{{ url_for('admin_users') }}" class="admin-tile">👥 Manage Users</a>
+      <a href="{{ url_for('admin_history') }}" class="admin-tile">📜 History</a>
+      <a href="{{ url_for('admin_schedule') }}" class="admin-tile">🗓️ Edit Schedule</a>
+      <a href="{{ url_for('admin_settings') }}" class="admin-tile">⚙️ Settings</a>
     </div>
   </div>
 </div>

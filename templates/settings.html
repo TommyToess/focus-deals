@@ -38,23 +38,6 @@
       </div>
     </form>
 
-    <!-- Admin tools -->
-    {% if session.get('is_admin') %}
-      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
-
-      <div class="stack" style="gap: 10px;">
-        <h3 style="margin: 0;">Admin Tools</h3>
-
-        <div class="form-actions">
-          <a href="{{ url_for('admin_users') }}"
-             class="submit"
-             style="text-decoration:none; display:inline-block;">
-            👥 Manage Users
-          </a>
-        </div>
-      </div>
-    {% endif %}
-
     <!-- Finalize month -->
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
 
