@@ -7,25 +7,30 @@
   </div>
 
   <div class="content-card card-wide">
+    <!-- Settings form -->
     <form method="post" class="form">
       <div class="form-row">
         <label for="current_month_start">Current month start</label>
-        <input id="current_month_start" type="date" name="current_month_start" value="{{ settings.current_month_start }}" required>
+        <input id="current_month_start" type="date" name="current_month_start"
+               value="{{ settings.current_month_start }}" required>
       </div>
 
       <div class="form-row">
         <label for="current_month_end">Current month end</label>
-        <input id="current_month_end" type="date" name="current_month_end" value="{{ settings.current_month_end }}" required>
+        <input id="current_month_end" type="date" name="current_month_end"
+               value="{{ settings.current_month_end }}" required>
       </div>
 
       <div class="form-row">
         <label for="monthly_deal_target">Monthly deal target</label>
-        <input id="monthly_deal_target" type="number" name="monthly_deal_target" value="{{ settings.monthly_deal_target }}" required>
+        <input id="monthly_deal_target" type="number" name="monthly_deal_target"
+               value="{{ settings.monthly_deal_target }}" required>
       </div>
 
       <div class="form-row">
         <label for="stretch_goal">Stretch goal</label>
-        <input id="stretch_goal" type="number" name="stretch_goal" value="{{ settings.stretch_goal }}" required>
+        <input id="stretch_goal" type="number" name="stretch_goal"
+               value="{{ settings.stretch_goal }}" required>
       </div>
 
       <div class="form-actions">
@@ -33,19 +38,29 @@
       </div>
     </form>
 
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
+    <!-- Admin tools -->
     {% if session.get('is_admin') %}
-    <div class="settings-section">
-        <h3>Admin Tools</h3>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
 
-        <a href="{{ url_for('admin_users') }}" class="btn btn-primary">
+      <div class="stack" style="gap: 10px;">
+        <h3 style="margin: 0;">Admin Tools</h3>
+
+        <div class="form-actions">
+          <a href="{{ url_for('admin_users') }}"
+             class="submit"
+             style="text-decoration:none; display:inline-block;">
             👥 Manage Users
-        </a>
-    </div>
+          </a>
+        </div>
+      </div>
     {% endif %}
+
+    <!-- Finalize month -->
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
 
     <form action="{{ url_for('finalize_month') }}" method="post" class="form">
       <p class="hint">Finalize saves the current month totals into the month comparison table.</p>
+
       <div class="form-actions">
         <button type="submit" class="submit">Finalize month and save scores</button>
       </div>
