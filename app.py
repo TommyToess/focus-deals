@@ -1,4 +1,5 @@
 # focus-deals v0.9.4 – Jan 2026
+import os
 from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
@@ -25,7 +26,7 @@ def verify_reset_token(token, max_age=3600):
         return None
 
 # ---------- Render DB ----------
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://admin:GadUsotO3gIaTJlTUo4cUQom77mimBTa@dpg-d5jdsi15pdvs739bsv8g-a.oregon-postgres.render.com/data_t0qd'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -137,9 +138,6 @@ SECURITY_QUESTIONS = [
     "What was the make of your first car?",
     "What is your favorite movie?"
 ]
-
-# ---------- Undo Stack ----------
-undo_stack = []
 
 # ---------- Routes ----------
 
