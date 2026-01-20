@@ -840,7 +840,10 @@ canvas {
   color: white;
 }
 
-/* Optional: make Manage Users wider without changing Settings */
-.admin-users-page .card-wide {
-  max-width: 980px;
+/* FORCE Manage Users cards to fill the page width */
+.admin-users-page .content-card.card-wide {
+  max-width: 980px;     /* same as .page */
+  width: 100%;          /* key: actually fill available width */
+  margin-left: auto;
+  margin-right: auto;
 }
