@@ -166,12 +166,7 @@ def admin_schedule():
     shifts = ScheduleShift.query.filter(ScheduleShift.date >= week_start, ScheduleShift.date <= week_end).all()
     grid = {(s.employee, s.date): s for s in shifts}
 
-    users = db.execute("""
-        SELECT id, display_name
-        FROM users
-        WHERE is_admin = 0
-        ORDER BY display_name
-        """).fetchall()
+    employees = Users.query.filter_by(is_admin=False).order_by(Users.display_name).all()
     roles = ["Cashier", "Assistant Manager", "Store Manager", "Shift Lead"]
 
     prev_week = (week_start - timedelta(days=7)).strftime("%Y-%m-%d")
