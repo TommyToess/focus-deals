@@ -500,31 +500,45 @@ def change_password():
 
     user = User.query.get(session["user_id"])
 
+    # Only require security setup if they don't have it yet
+    needs_security_setup = not user.security_question or not user.security_answer_hash
+
     if request.method == "POST":
-        new = request.form["new_password"]
-        confirm = request.form["confirm_password"]
-        question = request.form["security_question"]
-        answer = request.form["security_answer"]
+        new = request.form.get("new_password", "")
+        confirm = request.form.get("confirm_password", "")
 
         if new != confirm:
             flash("Passwords must match", "error")
             return redirect(url_for("change_password"))
 
-        if question not in SECURITY_QUESTIONS:
-            flash("Invalid security question", "error")
-            return redirect(url_for("change_password"))
+        # If they need security setup, require it. Otherwise, ignore it.
+        if needs_security_setup:
+            question = request.form.get("security_question", "")
+            answer = request.form.get("security_answer", "")
 
+            if question not in SECURITY_QUESTIONS:
+                flash("Invalid security question", "error")
+                return redirect(url_for("change_password"))
+
+            if not answer.strip():
+                flash("Security answer is required", "error")
+                return redirect(url_for("change_password"))
+
+            user.security_question = question
+            user.security_answer_hash = generate_password_hash(answer.lower().strip())
+
+        # Always update password
         user.password_hash = generate_password_hash(new)
-        user.security_question = question
-        user.security_answer_hash = generate_password_hash(answer.lower().strip())
         user.must_change_password = False
 
         db.session.commit()
+        flash("Password updated", "success")
         return redirect(url_for("index"))
 
     return render_template(
         "change_password.html",
-        questions=SECURITY_QUESTIONS
+        questions=SECURITY_QUESTIONS,
+        needs_security_setup=needs_security_setup
     )
 
 @app.route("/forgot_password", methods=["GET", "POST"])
