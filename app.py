@@ -640,29 +640,40 @@ def security_question():
 
 @app.route("/reset_password_secure", methods=["GET", "POST"])
 def reset_password_secure():
+    # If session died between steps, you’ll get bounced here
     if not session.get("allow_password_reset") or not session.get("reset_user"):
         flash("Reset session expired. Please start the reset again.", "error")
         return redirect(url_for("forgot_password"))
 
-    user = Users.query.get(session["reset_user"])
+    user = Users.query.get(session.get("reset_user"))
+    if not user:
+        session.pop("allow_password_reset", None)
+        session.pop("reset_user", None)
+        flash("That account no longer exists. Start the reset again.", "error")
+        return redirect(url_for("forgot_password"))
 
     if request.method == "POST":
-        new = request.form.get("new_password")
-        confirm = request.form.get("confirm_password")
+        app.logger.info("reset_password_secure POST received for user_id=%s", user.id)
+
+        new = (request.form.get("new_password") or "").strip()
+        confirm = (request.form.get("confirm_password") or "").strip()
+
+        if not new:
+            flash("Password is required.", "error")
+            return render_template("reset_password.html")
 
         if new != confirm:
-            flash("Passwords must match", "error")
-            return redirect(url_for("reset_password_secure"))
+            flash("Passwords must match.", "error")
+            return render_template("reset_password.html")
 
         user.password_hash = generate_password_hash(new)
         user.must_change_password = False
-
         db.session.commit()
 
         session.pop("allow_password_reset", None)
         session.pop("reset_user", None)
 
-        flash("Password reset successfully", "success")
+        flash("Password reset successfully. Please log in.", "success")
         return redirect(url_for("login"))
 
     return render_template("reset_password.html")
