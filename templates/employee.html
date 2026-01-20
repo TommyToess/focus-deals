@@ -5,7 +5,7 @@
 
   <div class="dashboard-header">
     <div>
-      <h1>{{ employee }}</h1>
+      <h1>{{ display_name(employee) }}</h1>
       <p class="muted">
         {{ settings.current_month_start|pretty_date }} – {{ settings.current_month_end|pretty_date }}
       </p>

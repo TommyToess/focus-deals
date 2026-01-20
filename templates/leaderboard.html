@@ -64,7 +64,8 @@
             <td>{{ loop.index }}</td>
             <td>
               <a href="{{ url_for('employee_profile', name=row.employee) }}">
-                {{ row.employee }}
+                {{ display_name(row.employee) }}
+              </a>
               </a>
             </td>
             <td>{{ row.hours|round(2) }}</td>

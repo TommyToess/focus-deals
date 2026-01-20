@@ -144,11 +144,17 @@ SECURITY_QUESTIONS = [
 ]
 
 @app.context_processor
-def inject_name_map():
+def inject_name_helpers():
     users = Users.query.all()
-    return {
-        "name_map": {u.username: (u.display_name or u.username) for u in users}
-    }
+    name_map = {u.username: (u.display_name or u.username) for u in users}
+
+    def display_name(value: str) -> str:
+        if not value:
+            return ""
+        return name_map.get(value, value)  # fallback for old rows
+
+    return {"name_map": name_map, "display_name": display_name}
+
 # ---------- Undo Stack ----------
 undo_stack = []
 

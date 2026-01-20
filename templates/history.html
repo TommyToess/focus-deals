@@ -26,7 +26,7 @@
           {% for entry in entries %}
           <tr>
             <td>{{ entry.date.strftime('%Y-%m-%d') }}</td>
-            <td>{{ entry.employee }}</td>
+            <td>{{ display_name(entry.employee) }}</td>
             <td>{{ entry.shift }}</td>
             <td>{{ entry.hours|round(2) }}</td>
             <td>{{ entry.deals }}</td>
@@ -106,7 +106,7 @@ function openEditModal(id){
     .then(res => res.json())
     .then(entry => {
       document.getElementById('editId').value = entry.id;
-      document.getElementById('editEmployee').value = entry.employee;
+      document.getElementById('editEmployee').value = display_name(entry.employee);
       document.getElementById('editDate').value = entry.date;
       document.getElementById('editShift').value = entry.shift;
       document.getElementById('editHours').value = entry.hours;
