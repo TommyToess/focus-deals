@@ -1,38 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Focus Deals</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <title>Focus Deals</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <div class="page">
+
+<div class="page">
+
+    <!-- NAVBAR -->
     <nav class="navbar">
-      <a href="/" class="brand"><span class="pill">Focus Deals</span></a>
+        <div class="brand">
+            <strong>Focus Deals</strong>
+        </div>
 
-      <a href="/">Home</a>
-      <a href="/leaderboard">Leaderboard</a>
-      <a href="/compare_scores">Compare Months</a>
+        <a href="{{ url_for('index') }}">🏠 Home</a>
+        <a href="{{ url_for('leaderboard') }}">🏆 Leaderboard</a>
+        <a href="{{ url_for('compare_scores') }}">📊 Compare</a>
+        <a href="{{ url_for('schedule') }}">🗓️ Schedule</a>
 
-      {% if session.get('logged_in') %}
-        <a href="{{ url_for('schedule') }}">Schedule</a>
-      {% endif %}
+        {% if session.get('is_admin') %}
+            <a href="{{ url_for('admin_dashboard') }}">🛠️ Admin</a>
+        {% endif %}
 
-      {% if session.get('logged_in') and session.get('is_admin') %}
-        <a href="/history">History</a>
-        <a href="/settings">Settings</a>
-        <a href="/ask">Ask</a>
-      {% endif %}
-
-      {% if session.get('logged_in') %}
-        <a href="{{ url_for('logout') }}" class="right-link">Logout</a>
-      {% else %}
-        <a href="{{ url_for('login') }}" class="right-link">Login</a>
-      {% endif %}
+        {% if session.get('logged_in') %}
+            <a href="{{ url_for('logout') }}" class="right-link">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}" class="right-link">Login</a>
+        {% endif %}
     </nav>
 
-
+    <!-- FLASH MESSAGES -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -41,9 +43,13 @@
       {% endif %}
     {% endwith %}
 
+    <!-- PAGE CONTENT -->
     {% block content %}{% endblock %}
-  </div>
 
-  {% block extra_js %}{% endblock %}
+</div>
+
+<!-- PAGE SCRIPTS (per-page JS) -->
+{% block extra_js %}{% endblock %}
+
 </body>
 </html>

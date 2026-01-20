@@ -143,12 +143,69 @@ undo_stack = []
 
 # ---------- Routes ----------
 
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    s = get_settings()
+    return render_template("admin_dashboard.html", settings=s)
+
+@app.route("/admin/schedule")
+@admin_required
+def admin_schedule():
+    # simplest: reuse schedule() but allow editing in template via a flag
+    today = datetime.today().date()
+    week_start_str = request.args.get("week_start")
+    week_start = datetime.strptime(week_start_str, "%Y-%m-%d").date() if week_start_str else get_week_start_saturday(today)
+
+    days = [week_start + timedelta(days=i) for i in range(7)]
+    week_end = days[-1]
+
+    shifts = ScheduleShift.query.filter(ScheduleShift.date >= week_start, ScheduleShift.date <= week_end).all()
+    grid = {(s.employee, s.date): s for s in shifts}
+
+    employees = ["Sarah","Angie","Beth","Terry","Jeff","Vernon"]
+    roles = ["Cashier", "Assistant Manager", "Store Manager", "Shift Lead"]
+
+    prev_week = (week_start - timedelta(days=7)).strftime("%Y-%m-%d")
+    next_week = (week_start + timedelta(days=7)).strftime("%Y-%m-%d")
+
+    return render_template(
+        "schedule.html",
+        employees=employees,
+        days=days,
+        grid=grid,
+        roles=roles,
+        week_start=week_start,
+        prev_week=prev_week,
+        next_week=next_week,
+        editable=True
+    )
+
+@app.route("/admin/settings", methods=["GET", "POST"])
+@admin_required
+def admin_settings():
+    s = get_settings()
+    if request.method == "POST":
+        s.current_month_start = datetime.strptime(request.form["current_month_start"], "%Y-%m-%d").date()
+        s.current_month_end = datetime.strptime(request.form["current_month_end"], "%Y-%m-%d").date()
+        s.monthly_deal_target = int(request.form["monthly_deal_target"])
+        s.stretch_goal = int(request.form["stretch_goal"])
+        db.session.commit()
+        flash("Settings saved", "success")
+        return redirect(url_for("admin_settings"))
+    return render_template("settings.html", settings=s)
+
+@app.route("/admin/history")
+@admin_required
+def admin_history():
+    entries = Entry.query.order_by(Entry.date.desc()).all()
+    return render_template("history.html", entries=entries, can_undo=len(undo_stack) > 0)
+
 @app.route("/admin/users")
 @admin_required
 def admin_users():
     users = User.query.order_by(User.username).all()
     return render_template("admin_users.html", users=users)
-
 
 @app.route("/admin/users/create", methods=["POST"])
 @admin_required
@@ -170,14 +227,13 @@ def create_user():
         is_admin=is_admin,
         must_change_password=True
     )
-    user.set_password(password)
+    user.password_hash = generate_password_hash(password)
 
     db.session.add(user)
     db.session.commit()
 
     flash("User created")
     return redirect(url_for("admin_users"))
-
 
 @app.route("/admin/users/<int:user_id>/update", methods=["POST"])
 @admin_required
@@ -230,7 +286,6 @@ def delete_user(user_id):
     flash("User deleted")
     return redirect(url_for("admin_users"))
 
-
 @app.route("/schedule")
 def schedule():
     today = datetime.today().date()
@@ -266,7 +321,8 @@ def schedule():
         roles=roles,
         week_start=week_start,
         prev_week=prev_week,
-        next_week=next_week
+        next_week=next_week,
+        editable=False
     )
 
 @app.route("/schedule/set", methods=["POST"])
@@ -285,7 +341,8 @@ def schedule_set():
         if existing:
             db.session.delete(existing)
             db.session.commit()
-        return redirect(url_for("schedule", week_start=request.form.get("week_start")))
+        return redirect(url_for("admin_schedule", week_start=request.form.get("week_start")))
+
 
     start_time = datetime.strptime(start_raw, "%H:%M").time()
     end_time = datetime.strptime(end_raw, "%H:%M").time()
@@ -305,42 +362,7 @@ def schedule_set():
         ))
 
     db.session.commit()
-    return redirect(url_for("schedule", week_start=request.form.get("week_start")))
-
-    employee = request.form["employee"]
-    date = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
-
-    start_raw = request.form.get("start_time", "").strip()
-    end_raw = request.form.get("end_time", "").strip()
-    role = request.form.get("role", "").strip() or None
-
-    # If no times, treat as Off (delete)
-    if not start_raw or not end_raw:
-        existing = ScheduleShift.query.filter_by(employee=employee, date=date).first()
-        if existing:
-            db.session.delete(existing)
-            db.session.commit()
-        return redirect(url_for("schedule", week_start=request.form.get("week_start")))
-
-    start_time = datetime.strptime(start_raw, "%H:%M").time()
-    end_time = datetime.strptime(end_raw, "%H:%M").time()
-
-    existing = ScheduleShift.query.filter_by(employee=employee, date=date).first()
-    if existing:
-        existing.start_time = start_time
-        existing.end_time = end_time
-        existing.role = role
-    else:
-        db.session.add(ScheduleShift(
-            employee=employee,
-            date=date,
-            start_time=start_time,
-            end_time=end_time,
-            role=role
-        ))
-
-    db.session.commit()
-    return redirect(url_for("schedule", week_start=request.form.get("week_start")))
+    return redirect(url_for("admin_schedule", week_start=request.form.get("week_start")))
 
 @app.route("/employee/<name>")
 def employee_profile(name):
@@ -697,12 +719,6 @@ def leaderboard():
         settings=s
     )
 
-@app.route("/history")
-@admin_required
-def history():
-    entries = Entry.query.order_by(Entry.date.desc()).all()
-    return render_template("history.html", entries=entries, can_undo=len(undo_stack)>0)
-
 @app.route("/get_entry/<int:id>")
 @admin_required
 def get_entry(id):
@@ -715,7 +731,6 @@ def get_entry(id):
         "hours": e.hours,
         "deals": e.deals
     })
-
 
 @app.route("/edit_entry/<int:id>", methods=["POST"])
 @admin_required
@@ -737,28 +752,16 @@ def delete_entry(id):
     undo_stack.append(e)
     db.session.delete(e)
     db.session.commit()
-    return redirect(url_for("history"))
+    return redirect(url_for("admin_history"))
 
 @app.route("/undo_delete")
+@admin_required
 def undo_delete():
     if undo_stack:
         e = undo_stack.pop()
         db.session.add(e)
         db.session.commit()
-    return redirect(url_for("history"))
-
-@app.route("/settings", methods=["GET","POST"])
-@admin_required
-def settings():
-    s = get_settings()
-    if request.method=="POST":
-        s.current_month_start = datetime.strptime(request.form["current_month_start"], "%Y-%m-%d").date()
-        s.current_month_end = datetime.strptime(request.form["current_month_end"], "%Y-%m-%d").date()
-        s.monthly_deal_target = int(request.form["monthly_deal_target"])
-        s.stretch_goal = int(request.form["stretch_goal"])
-        db.session.commit()
-        return redirect(url_for("settings"))
-    return render_template("settings.html", settings=s)
+    return redirect(url_for("admin_history"))
 
 @app.route("/finalize_month", methods=["POST"])
 @admin_required
@@ -778,7 +781,7 @@ def finalize_month():
         )
         db.session.add(ms)
     db.session.commit()
-    return redirect(url_for("settings"))
+    return redirect(url_for("admin_settings"))
 
 @app.route("/compare_scores")
 def compare_scores():

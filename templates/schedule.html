@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% set schedule_endpoint = 'admin_schedule' if editable else 'schedule' %}
+
 <div class="page-container page-full-width">
 
   <div class="dashboard-header">
@@ -9,11 +11,16 @@
       <p class="muted">
         Week: {{ days[0]|pretty_date }} – {{ days[6]|pretty_date }} (Sat–Fri)
       </p>
+      {% if editable %}
+        <p class="hint" style="margin:6px 0 0;">Editing mode (Admin)</p>
+      {% else %}
+        <p class="hint" style="margin:6px 0 0;">View-only</p>
+      {% endif %}
     </div>
 
     <div style="display:flex; gap:10px;">
-      <a class="submit" href="{{ url_for('schedule', week_start=prev_week) }}">← Prev</a>
-      <a class="submit" href="{{ url_for('schedule', week_start=next_week) }}">Next →</a>
+      <a class="submit" href="{{ url_for(schedule_endpoint, week_start=prev_week) }}">← Prev</a>
+      <a class="submit" href="{{ url_for(schedule_endpoint, week_start=next_week) }}">Next →</a>
     </div>
   </div>
 
@@ -38,47 +45,54 @@
               {% set s = grid.get((emp, d)) %}
               <td class="schedule-cell">
 
-                <form method="POST" action="{{ url_for('schedule_set') }}" class="schedule-form">
-                  <input type="hidden" name="employee" value="{{ emp }}">
-                  <input type="hidden" name="date" value="{{ d.strftime('%Y-%m-%d') }}">
-                  <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
+                {% if editable %}
+                  <form method="POST" action="{{ url_for('schedule_set') }}" class="schedule-form">
+                    <input type="hidden" name="employee" value="{{ emp }}">
+                    <input type="hidden" name="date" value="{{ d.strftime('%Y-%m-%d') }}">
+                    <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
 
-                  <div class="time-row">
-                    <input
-                      type="time"
-                      name="start_time"
-                      value="{{ s.start_time.strftime('%H:%M') if s and s.start_time else '' }}"
-                      {% if not session.get('is_admin') %}disabled{% endif %}
-                    >
-                    <span class="dash">–</span>
-                    <input
-                      type="time"
-                      name="end_time"
-                      value="{{ s.end_time.strftime('%H:%M') if s and s.end_time else '' }}"
-                      {% if not session.get('is_admin') %}disabled{% endif %}
-                    >
-                  </div>
+                    <div class="time-row">
+                      <input
+                        type="time"
+                        name="start_time"
+                        value="{{ s.start_time.strftime('%H:%M') if s and s.start_time else '' }}"
+                      >
+                      <span class="dash">–</span>
+                      <input
+                        type="time"
+                        name="end_time"
+                        value="{{ s.end_time.strftime('%H:%M') if s and s.end_time else '' }}"
+                      >
+                    </div>
 
-                  <select name="role" {% if not session.get('is_admin') %}disabled{% endif %}>
-                    <option value="">(Role optional)</option>
-                    {% for r in roles %}
-                      <option value="{{ r }}" {% if s and s.role == r %}selected{% endif %}>
-                        {{ r }}
-                      </option>
-                    {% endfor %}
-                  </select>
+                    <select name="role">
+                      <option value="">(Role optional)</option>
+                      {% for r in roles %}
+                        <option value="{{ r }}" {% if s and s.role == r %}selected{% endif %}>
+                          {{ r }}
+                        </option>
+                      {% endfor %}
+                    </select>
 
-                  {% if session.get('is_admin') %}
                     <button type="submit" class="mini-save">Save</button>
+
                     {% if s %}
                       <div class="saved-note">Saved</div>
                     {% endif %}
-                  {% else %}
-                    <div class="view-only-note">
-                      {% if s %}Scheduled{% else %}Off{% endif %}
-                    </div>
-                  {% endif %}
-                </form>
+                  </form>
+
+                {% else %}
+                  <div class="view-only-note">
+                    {% if s and s.start_time and s.end_time %}
+                      {{ s.start_time.strftime('%-I:%M %p') if s.start_time else '' }}
+                      –
+                      {{ s.end_time.strftime('%-I:%M %p') if s.end_time else '' }}
+                      {% if s.role %}<div class="small-note">{{ s.role }}</div>{% endif %}
+                    {% else %}
+                      Off
+                    {% endif %}
+                  </div>
+                {% endif %}
 
               </td>
             {% endfor %}
@@ -88,9 +102,11 @@
       </table>
     </div>
 
-    <p class="muted" style="margin-top:12px;">
-      Leave times blank to mark the day as Off.
-    </p>
+    {% if editable %}
+      <p class="muted" style="margin-top:12px;">
+        Leave times blank to mark the day as Off.
+      </p>
+    {% endif %}
   </div>
 
 </div>
