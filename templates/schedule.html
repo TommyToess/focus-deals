@@ -39,16 +39,16 @@
         <tbody>
           {% for emp in employees %}
           <tr>
-            <td class="emp-name" data-label="Employee">{{ emp }}</td>
+            <td class="emp-name" data-label="Employee">{{ emp.display_name }}</td>
 
             {% for d in days %}
-              {% set s = grid.get((emp, d)) %}
+              {% set s = grid.get((emp.username, d)) %}
               <td class="schedule-cell" data-label="{{ d|pretty_date }}">
 
 
                 {% if editable %}
                   <form method="POST" action="{{ url_for('schedule_set') }}" class="schedule-form">
-                    <input type="hidden" name="employee" value="{{ emp }}">
+                    <input type="hidden" name="employee" value="{{ emp.username }}">
                     <input type="hidden" name="date" value="{{ d.strftime('%Y-%m-%d') }}">
                     <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
 

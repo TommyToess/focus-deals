@@ -20,7 +20,7 @@
         <tbody>
           {% for row in table %}
             <tr>
-              <td><strong>{{ row.employee }}</strong></td>
+              <td><strong>{{ display_name(row.employee) }}</strong></td>
               {% for cell in row.scores %}
                 <td style="font-weight: 800; color:
                   {% if cell.change is not none %}

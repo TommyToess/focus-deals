@@ -55,13 +55,10 @@
 
       <div class="form-row">
         <label for="editEmployee">Employee</label>
-        <select name="employee" id="editEmployee" required>
-          <option>Sarah</option>
-          <option>Angie</option>
-          <option>Beth</option>
-          <option>Terry</option>
-          <option>Jeff</option>
-          <option>Vernon</option>
+        <select id="editEmployee" name="employee" required>
+          {% for u in users %}
+            <option value="{{ u.username }}">{{ u.display_name }}</option>
+          {% endfor %}
         </select>
       </div>
 
@@ -91,7 +88,10 @@
 
       <div class="form-actions">
         <button type="button" class="delete" onclick="closeEditModal()">Cancel</button>
-        <button type="submit" class="submit">Save changes</button>
+        <form method="POST" action="{{ url_for('delete_entry', id=entry.id) }}"
+              onsubmit="return confirm('Delete this entry?');" style="display:inline;">
+          <button type="submit" class="delete">Delete</button>
+        </form>
       </div>
     </form>
   </div>
@@ -105,7 +105,8 @@ function openEditModal(id){
   fetch(`/get_entry/${id}`)
     .then(res => res.json())
     .then(entry => {
-      document.getElementById('editId').value = entry.id;
+      document.getElementById('editEmployee').value = entry.employee;
+
       document.getElementById('editEmployee').value = display_name(entry.employee);
       document.getElementById('editDate').value = entry.date;
       document.getElementById('editShift').value = entry.shift;

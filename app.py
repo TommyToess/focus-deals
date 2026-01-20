@@ -216,7 +216,8 @@ def admin_settings():
 @admin_required
 def admin_history():
     entries = Entry.query.order_by(Entry.date.desc()).all()
-    return render_template("history.html", entries=entries, can_undo=len(undo_stack) > 0)
+    users = Users.query.order_by(Users.display_name).all()
+    return render_template("history.html", entries=entries, users=users, can_undo=len(undo_stack) > 0)
 
 @app.route("/admin/users")
 @admin_required
@@ -590,22 +591,6 @@ def security_question():
         question=user.security_question
     )
 
-    if request.method == "POST":
-        username = request.form.get("username")
-        user = Users.query.filter_by(username=username).first()
-
-        if user:
-            token = generate_reset_token(user.id)
-            reset_link = url_for("reset_password", token=token, _external=True)
-
-            # TEMP: print link to console (replace with email later)
-            print("PASSWORD RESET LINK:", reset_link)
-
-        flash("If the account exists, a reset link was sent.", "success")
-        return redirect(url_for("login"))
-
-    return render_template("reset_request.html")
-
 from werkzeug.security import generate_password_hash
 
 @app.route("/reset_password_secure", methods=["GET", "POST"])
@@ -775,7 +760,7 @@ def edit_entry(id):
     db.session.commit()
     return "", 200
 
-@app.route("/delete/<int:id>")
+@app.route("/delete/<int:id>", methods=["POST"])
 @admin_required
 def delete_entry(id):
     e = Entry.query.get_or_404(id)
