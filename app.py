@@ -1,3 +1,4 @@
+# focus-deals v0.9.4 – Jan 2026
 from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
