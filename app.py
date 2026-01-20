@@ -1,4 +1,4 @@
-# focus-deals v0.9.4 – Jan 2026
+# focus-deals v0.9.6 – Jan 2026
 import os
 import secrets
 from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify
