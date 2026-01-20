@@ -698,7 +698,7 @@ def index():
         db.session.commit()
         return redirect(url_for("index"))
 
-    employees = ["Sarah","Angie","Beth","Terry","Jeff","Vernon"]
+    employees = Users.query.filter_by(is_admin=False).order_by(Users.display_name).all()
     shifts = ["Open","Mid","Close"]
 
     return render_template(
