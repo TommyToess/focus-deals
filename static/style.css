@@ -165,10 +165,6 @@ body {
 }
 
 /* ---------- Helpers ---------- */
-.center {
-    text-align: center;
-}
-
 .card-tight {
     max-width: 460px;
     margin: 0 auto;
@@ -178,29 +174,6 @@ body {
     max-width: 820px;
     margin: 0 auto;
 }
-
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(160px, 1fr));
-    gap: 14px;
-}
-
-.kpi {
-    border-radius: 10px;
-    padding: 14px;
-    font-weight: 800;
-    text-align: center;
-}
-
-.kpi .value {
-    font-size: 1.5rem;
-    margin-top: 6px;
-}
-
-.kpi.blue { background: #2f80ed; color: #fff; }
-.kpi.green { background: #27ae60; color: #fff; }
-.kpi.soft { background: #e6f7ff; }
-.kpi.soft2 { background: #f0f4ff; }
 
 .badge {
     display: inline-flex;
@@ -290,27 +263,6 @@ canvas {
     margin-top: 20px;
 }
 
-/* ---------- Floating Add Button ---------- */
-.floating-add {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    background: #2f80ed;
-    color: white;
-    font-size: 2rem;
-    font-weight: bold;
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    z-index: 1000;
-}
-
 /* ---------- Modal (CENTERED & MOBILE SAFE) ---------- */
 .modal {
     display: none;
@@ -323,27 +275,22 @@ canvas {
     background-color: rgba(0,0,0,0.5);
     align-items: center;
     justify-content: center;
-    padding: 10px; /* ensures small screens still have spacing */
+    padding: 10px;
     box-sizing: border-box;
 }
 
-/* Modal Box */
 .modal-content {
     background: #ffffff;
     padding: 20px;
     border-radius: 12px;
-
     width: 100%;
     max-width: 420px;
-
     max-height: 85vh;
     overflow-y: auto;
-
     position: relative;
     box-sizing: border-box;
 }
 
-/* Close Button */
 .close {
     position: absolute;
     top: 12px;
@@ -354,7 +301,6 @@ canvas {
     line-height: 1;
 }
 
-/* Modal Form Layout */
 .modal-content form {
     display: flex;
     flex-direction: column;
@@ -426,7 +372,6 @@ canvas {
 
 /* ---------- Mobile Adjustments ---------- */
 @media (max-width: 600px) {
-
     .navbar {
         flex-wrap: wrap;
         gap: 12px;
@@ -458,12 +403,6 @@ canvas {
         font-size: 1rem;
     }
 
-    .floating-add {
-        width: 56px;
-        height: 56px;
-        font-size: 1.8rem;
-    }
-
     /* iOS Date Input Fix */
     .modal-content input[type="date"] {
         width: 100%;
@@ -479,7 +418,6 @@ canvas {
         line-height: 1.2;
     }
 
-    /* Optional: prevent modal content from being too small */
     .modal-content form input,
     .modal-content form select {
         font-size: 1rem;
@@ -504,57 +442,6 @@ canvas {
     border-radius: 12px;
     background: #fafafa;
     padding: 12px;
-}
-
-.bubble {
-    max-width: 78%;
-    padding: 10px 12px;
-    border-radius: 14px;
-    margin: 8px 0;
-    word-break: break-word;
-    line-height: 1.25;
-}
-
-.bubble.user {
-    margin-left: auto;
-    background: #2f80ed;
-    color: #fff;
-    border-bottom-right-radius: 6px;
-}
-
-.bubble.assistant {
-    margin-right: auto;
-    background: #e5e7eb;
-    color: #111827;
-    border-bottom-left-radius: 6px;
-}
-
-.typing {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background: #e5e7eb;
-    color: #111827;
-    width: fit-content;
-}
-
-.dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #6b7280;
-    display: inline-block;
-    animation: bounce 1.05s infinite;
-}
-
-.dot:nth-child(2) { animation-delay: 0.15s; }
-.dot:nth-child(3) { animation-delay: 0.30s; }
-
-@keyframes bounce {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-    40% { transform: translateY(-4px); opacity: 1; }
 }
 
 /* ---------- Page Container ---------- */
@@ -670,7 +557,6 @@ canvas {
 }
 
 /* ---------- Leaderboard polish ---------- */
-
 .badge {
   background: #eef3ff;
   padding: 10px 16px;
@@ -697,7 +583,6 @@ canvas {
   text-decoration: underline;
 }
 
-/* Top 3 styling - subtle, not aggressive */
 .rank-1 {
   background: #fff8db;
   border-left: 6px solid #f2c94c;
@@ -718,11 +603,6 @@ canvas {
   font-size: 0.85rem;
   opacity: 0.7;
   margin-top: 3px;
-}
-
-.small-note {
-  font-size: 0.85rem;
-  opacity: 0.75;
 }
 
 .schedule-table td, .schedule-table th {
@@ -837,7 +717,6 @@ canvas {
 }
 
 /* ---------- Full-width schedule layout ---------- */
-
 .page-full-width {
   max-width: 100%;
   padding-left: 16px;
@@ -852,7 +731,6 @@ canvas {
   overflow-x: hidden;
 }
 
-/* Make table stretch evenly */
 .schedule-table {
   width: 100%;
   table-layout: fixed;
@@ -866,7 +744,6 @@ canvas {
   width: calc((100% - 160px) / 7);
 }
 
-/* Cells */
 .schedule-cell {
   padding: 8px;
 }
@@ -877,7 +754,6 @@ canvas {
   gap: 6px;
 }
 
-/* Time inputs stay compact */
 .time-row {
   display: flex;
   gap: 4px;
@@ -894,14 +770,12 @@ canvas {
   opacity: 0.6;
 }
 
-/* Role dropdown */
 .schedule-form select {
   width: 100%;
   padding: 6px;
   font-size: 0.9rem;
 }
 
-/* Buttons */
 .mini-save {
   margin-top: 4px;
   padding: 8px;
@@ -909,82 +783,18 @@ canvas {
   font-weight: 600;
 }
 
-/* View-only note */
 .view-only-note {
   font-size: 0.8rem;
   opacity: 0.65;
   padding-top: 4px;
 }
 
-/* Tighten rows so everything fits */
 .schedule-table th,
 .schedule-table td {
   vertical-align: top;
 }
 
-/* ---------- Admin User Management ---------- */
-
-.user-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #e0e0e0;
-    flex-wrap: wrap;
-}
-
-.user-form {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    flex: 1;
-}
-
-.user-form input[type="text"] {
-    min-width: 160px;
-}
-
-.checkbox {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-}
-
-/* Buttons */
-.btn-primary {
-    background: #6c4ef6;
-    color: white;
-}
-
-.btn-secondary {
-    background: #e0e0e0;
-}
-
-.btn-danger {
-    background: #e53935;
-    color: white;
-}
-
-.user-row button {
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-
-/* Mobile stacking */
-@media (max-width: 700px) {
-    .user-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-}
-
 /* ---- Admin Users page checkbox + actions fixes ---- */
-
-/* Put checkboxes on one line and stop them from stretching */
 .checkbox-row {
   display: flex;
   gap: 18px;
@@ -992,7 +802,6 @@ canvas {
   flex-wrap: wrap;
 }
 
-/* Make checkbox + label inline and normal sized */
 .checkbox-inline {
   display: inline-flex;
   align-items: center;
@@ -1000,7 +809,6 @@ canvas {
   margin: 0;
 }
 
-/* This is the key: override any global input styling */
 .checkbox-inline input[type="checkbox"] {
   width: auto !important;
   height: auto !important;
@@ -1011,20 +819,17 @@ canvas {
   box-shadow: none !important;
 }
 
-/* Optional: make each user look like a neat card section */
 .user-card {
   padding: 12px 0;
   border-top: 1px solid #e5e7eb;
 }
 
-/* Actions row spacing */
 .user-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-/* Optional button variants if your CSS doesn't have them */
 .submit.secondary {
   background: #e5e7eb;
   color: #111827;
@@ -1035,6 +840,7 @@ canvas {
   color: white;
 }
 
+/* Optional: make Manage Users wider without changing Settings */
 .admin-users-page .card-wide {
-  max-width: 980px; /* matches .page max-width */
+  max-width: 980px;
 }
