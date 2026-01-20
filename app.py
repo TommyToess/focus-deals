@@ -143,6 +143,12 @@ SECURITY_QUESTIONS = [
     "What is your favorite movie?"
 ]
 
+@app.context_processor
+def inject_name_map():
+    users = Users.query.all()
+    return {
+        "name_map": {u.username: (u.display_name or u.username) for u in users}
+    }
 # ---------- Undo Stack ----------
 undo_stack = []
 

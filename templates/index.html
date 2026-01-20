@@ -69,10 +69,11 @@
     <form method="POST" action="{{ url_for('index') }}" class="modal-form">
       <label>Employee</label>
       <select name="employee" required>
-        {% for e in employees %}
-          <option value="{{ e }}">{{ e }}</option>
+        {% for u in employees %}
+          <option value="{{ u.username }}">{{ u.display_name }}</option>
         {% endfor %}
       </select>
+
 
       <label>Date</label>
       <input type="date" name="date" value="{{ today }}" required>
