@@ -168,7 +168,7 @@ def admin_schedule():
     shifts = ScheduleShift.query.filter(ScheduleShift.date >= week_start, ScheduleShift.date <= week_end).all()
     grid = {(s.employee, s.date): s for s in shifts}
 
-    employees = Users.query.filter_by(is_admin=False).order_by(Users.display_name).all()
+    employees = Users.query.order_by(Users.display_name).all()
     roles = ["Cashier", "Assistant Manager", "Store Manager", "Shift Lead"]
 
     prev_week = (week_start - timedelta(days=7)).strftime("%Y-%m-%d")
@@ -315,7 +315,7 @@ def schedule():
     # Map (employee, date) -> shift record
     grid = {(s.employee, s.date): s for s in shifts}
 
-    employees = Users.query.filter_by(is_admin=False).order_by(Users.display_name).all()
+    employees = Users.query.order_by(Users.display_name).all()
     roles = ["Cashier", "Assistant Manager", "Store Manager", "Shift Lead"]
 
     prev_week = (week_start - timedelta(days=7)).strftime("%Y-%m-%d")
@@ -698,7 +698,7 @@ def index():
         db.session.commit()
         return redirect(url_for("index"))
 
-    employees = Users.query.filter_by(is_admin=False).order_by(Users.display_name).all()
+    employees = Users.query.order_by(Users.display_name).all()
     shifts = ["Open","Mid","Close"]
 
     return render_template(
