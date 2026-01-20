@@ -1,12 +1,13 @@
 # focus-deals v0.9.4 – Jan 2026
 import os
+import secrets
 from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from itsdangerous import URLSafeTimedSerializer
-import secrets
+from sqlalchemy.exc import IntegrityError
 
 from openai import OpenAI
 client = OpenAI()
@@ -769,18 +770,53 @@ def edit_entry(id):
 @admin_required
 def delete_entry(id):
     e = Entry.query.get_or_404(id)
-    undo_stack.append(e)
+
+    # store data, not the ORM object
+    undo_stack.append({
+        "id": e.id,
+        "employee": e.employee,
+        "date": e.date,
+        "shift": e.shift,
+        "hours": e.hours,
+        "deals": e.deals,
+    })
+
     db.session.delete(e)
     db.session.commit()
+    flash("Entry deleted (you can undo).", "info")
     return redirect(url_for("admin_history"))
 
 @app.route("/undo_delete")
 @admin_required
 def undo_delete():
-    if undo_stack:
-        e = undo_stack.pop()
-        db.session.add(e)
+    if not undo_stack:
+        flash("Nothing to undo.", "info")
+        return redirect(url_for("admin_history"))
+
+    data = undo_stack.pop()
+
+    restored = Entry(
+        employee=data["employee"],
+        date=data["date"],
+        shift=data["shift"],
+        hours=data["hours"],
+        deals=data["deals"],
+    )
+
+    # Try to restore the same ID (nice for UI), but fall back if it conflicts
+    restored.id = data["id"]
+
+    db.session.add(restored)
+    try:
         db.session.commit()
+        flash("Undo successful.", "success")
+    except IntegrityError:
+        db.session.rollback()
+        restored.id = None
+        db.session.add(restored)
+        db.session.commit()
+        flash("Undo successful (new ID assigned).", "success")
+
     return redirect(url_for("admin_history"))
 
 @app.route("/finalize_month", methods=["POST"])
