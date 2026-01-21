@@ -94,6 +94,14 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
+def admin_required_api(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in") or not session.get("is_admin"):
+            return jsonify({"error": "unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated
+
 def get_week_start_saturday(d):
     # Python weekday: Mon=0 ... Sun=6, Saturday=5
     offset = (d.weekday() - 5) % 7
@@ -452,7 +460,7 @@ def ask():
     return render_template("ask.html", chat=session["chat"], error=None)
 
 @app.route("/ask_ajax", methods=["POST"])
-@admin_required
+@admin_required_api
 def ask_ajax():
     data = request.get_json()
     question = data.get("question")
@@ -689,7 +697,9 @@ def index():
     stretch_pct = round((deals_done / settings.stretch_goal) * 100, 1) if settings.stretch_goal else 0
 
 
-    if request.method=="POST":
+    if request.method == "POST":
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
         e = Entry(
             employee=request.form["employee"],
             date=datetime.strptime(request.form["date"], "%Y-%m-%d").date(),
