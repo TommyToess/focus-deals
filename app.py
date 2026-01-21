@@ -13,7 +13,16 @@ from openai import OpenAI
 client = OpenAI()
 
 app = Flask(__name__)
-app.secret_key = "f10360288a752c7695de054e98e48d3a"
+
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+)
+# Only force Secure cookies when you're on HTTPS (Render will be HTTPS)
+if os.environ.get("FLASK_ENV") == "production" or os.environ.get("RENDER"):
+    app.config["SESSION_COOKIE_SECURE"] = True
+
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 
 serializer = URLSafeTimedSerializer(app.secret_key)
 
@@ -27,8 +36,12 @@ def verify_reset_token(token, max_age=3600):
         return None
 
 # ---------- Render DB ----------
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db_url = os.environ.get("DATABASE_URL")
+if db_url and db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = db_url or "sqlite:///focus_deals.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 # ---------- Models ----------
@@ -526,7 +539,7 @@ def ask_ajax():
 
         # Call OpenAI
         response = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model=os.environ.get("OPENAI_MODEL", "gpt-4.1-mini"),
             messages=messages
         )
 
@@ -908,5 +921,7 @@ with app.app_context():
     db.create_all()
 
 # ---------- Run ----------
-if __name__=="__main__":
-    app.run(debug=True)
+if __name__ == "__main__":
+    debug = os.environ.get("FLASK_ENV") != "production"
+    app.run(debug=debug)
+
