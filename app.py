@@ -1,7 +1,7 @@
 # focus-deals v0.9.6 – Jan 2026
 import os
 import secrets
-from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -141,6 +141,27 @@ def build_leaderboard(entries):
         })
     leaderboard.sort(key=lambda x: x["dph"], reverse=True)
     return leaderboard
+
+def csrf_token():
+    # Create once per session
+    if "csrf_token" not in session:
+        session["csrf_token"] = secrets.token_urlsafe(32)
+    return session["csrf_token"]
+
+# Make it usable in templates as {{ csrf_token() }}
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+@app.before_request
+def csrf_protect():
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        token = session.get("csrf_token")
+        sent = (
+            request.form.get("csrf_token")
+            or request.headers.get("X-CSRFToken")
+            or request.headers.get("X-CSRF-Token")
+        )
+        if not token or not sent or not secrets.compare_digest(token, sent):
+            abort(403)
 
 SECURITY_QUESTIONS = [
     "What was the name of your first pet?",

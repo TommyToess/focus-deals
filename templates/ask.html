@@ -12,6 +12,7 @@
       <div id="chat-window" class="chat-window" aria-live="polite"></div>
 
       <form id="chat-form" class="form-inline" style="align-items: stretch;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-row" style="flex:1; min-width: 220px;">
           <label for="question">Your question</label>
           <input type="text" id="question" placeholder="Ask about goals, hours, deals, leaderboard, etc." required>

@@ -9,6 +9,7 @@
   <div class="content-card card-wide">
     <!-- Settings form -->
     <form method="post" class="form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-row">
         <label for="current_month_start">Current month start</label>
         <input id="current_month_start" type="date" name="current_month_start"
@@ -42,6 +43,7 @@
     <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
 
     <form action="{{ url_for('finalize_month') }}" method="post" class="form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <p class="hint">Finalize saves the current month totals into the month comparison table.</p>
 
       <div class="form-actions">

@@ -34,7 +34,8 @@
               <div class="row" style="justify-content:center; flex-wrap: wrap;">
                 <button type="button" class="submit" onclick="openEditModal({{ entry.id }})">Edit</button>
                 <form method="POST" action="{{ url_for('delete_entry', id=entry.id) }}"
-                      onsubmit="return confirm('Delete this entry?');" style="display:inline;">
+                    onsubmit="return confirm('Delete this entry?');" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="delete">Delete</button>
                 </form>
               </div>
@@ -54,6 +55,7 @@
     <h2 style="margin-top:0;">Edit entry</h2>
 
       <form id="editForm" class="form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="id" id="editId">
 
       <div class="form-row">
@@ -130,7 +132,10 @@ document.getElementById('editForm').addEventListener('submit', function(e){
 
   fetch(`/edit_entry/${id}`, {
     method: 'POST',
-    headers: {'Content-Type':'application/json'},
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    },
     body: JSON.stringify({
       employee: document.getElementById('editEmployee').value,
       date: document.getElementById('editDate').value,

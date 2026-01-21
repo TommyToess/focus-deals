@@ -8,6 +8,7 @@
 
   <div class="content-card card-tight">
     <form class="form" method="POST" action="{{ url_for('login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-row">
         <label for="username">Username</label>
         <input id="username" type="text" name="username" placeholder="Username" required>

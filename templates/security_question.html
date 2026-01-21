@@ -10,6 +10,7 @@
     <p style="font-weight:800;">{{ question }}</p>
 
     <form class="form" method="POST" action="{{ url_for('security_question') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-row">
         <label for="answer">Your answer</label>
         <input id="answer" type="text" name="answer" placeholder="Answer" required>

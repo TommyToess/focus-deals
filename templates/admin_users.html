@@ -11,6 +11,7 @@
     <h3 style="margin-top:0;">Add User</h3>
 
     <form method="POST" action="{{ url_for('create_user') }}" class="form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="form-row">
         <label for="new_username">Username</label>
         <input id="new_username" type="text" name="username" placeholder="username" required>
@@ -47,6 +48,7 @@
       {% for user in users %}
       <div class="user-card">
         <form method="POST" action="{{ url_for('update_user', user_id=user.id) }}" class="form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-row">
             <label for="u{{ user.id }}_username">Username</label>
             <input id="u{{ user.id }}_username" type="text" name="username" value="{{ user.username }}" required>
@@ -78,12 +80,14 @@
 
         <div class="form-actions user-actions">
           <form method="POST" action="{{ url_for('reset_user_password', user_id=user.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="submit secondary">Reset Password</button>
           </form>
 
           {% if user.id != session.get('user_id') %}
           <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}"
                 onsubmit="return confirm('Delete this user?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="submit danger">Delete</button>
           </form>
           {% endif %}

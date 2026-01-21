@@ -48,6 +48,7 @@
 
                 {% if editable %}
                   <form method="POST" action="{{ url_for('schedule_set') }}" class="schedule-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="employee" value="{{ emp.username }}">
                     <input type="hidden" name="date" value="{{ d.strftime('%Y-%m-%d') }}">
                     <input type="hidden" name="week_start" value="{{ week_start.strftime('%Y-%m-%d') }}">
