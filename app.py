@@ -198,6 +198,29 @@ def inject_name_helpers():
 
     return {"name_map": name_map, "display_name": display_name}
 
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+def too_many_attempts(key: str, limit: int, window_seconds: int):
+    now = int(datetime.utcnow().timestamp())
+    bucket = session.get(key, {"count": 0, "reset": now + window_seconds})
+
+    # reset window if expired
+    if now > bucket.get("reset", 0):
+        bucket = {"count": 0, "reset": now + window_seconds}
+
+    bucket["count"] += 1
+    session[key] = bucket
+
+    if bucket["count"] > limit:
+        return True, bucket["reset"] - now
+    return False, bucket["reset"] - now
+
 # ---------- Undo Stack ----------
 undo_stack = []
 
@@ -434,7 +457,13 @@ def schedule_set():
     return redirect(url_for("admin_schedule", week_start=request.form.get("week_start")))
 
 @app.route("/employee/<name>")
+@login_required
 def employee_profile(name):
+    if not session.get("is_admin"):
+        me = session.get("username")
+        if not me or name != me:
+            return redirect(url_for("employee_profile", name=me))
+
     s = get_settings()
 
     # Month range from settings
@@ -565,6 +594,10 @@ def clear_chat():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        limited, retry_in = too_many_attempts("rl_login", limit=8, window_seconds=600)  # 8 tries / 10 min
+        if limited:
+            flash(f"Too many login attempts. Try again in {retry_in} seconds.", "error")
+            return render_template("login.html"), 429
         username = (request.form.get("username") or "").strip().lower()
         password = request.form.get("password") or ""
 
@@ -584,9 +617,11 @@ def login():
             return render_template("login.html"), 400
 
         if ok:
+            session.pop("rl_login", None)
             session["user_id"] = user.id
             session["is_admin"] = user.is_admin
             session["logged_in"] = True
+            session["username"] = user.username
 
             if user.must_change_password:
                 # allow reset page to load for this user
@@ -605,6 +640,11 @@ def login():
 @app.route("/forgot_password", methods=["GET", "POST"])
 def forgot_password():
     if request.method == "POST":
+        limited, retry_in = too_many_attempts("rl_reset", limit=5, window_seconds=600)
+        if limited:
+            flash(f"Too many attempts. Try again in {retry_in} seconds.", "error")
+            return render_template("<that page>.html"), 429
+
         username = request.form.get("username")
         user = Users.query.filter_by(username=username).first()
 
@@ -626,6 +666,11 @@ def security_question():
     user = Users.query.get(user_id)
 
     if request.method == "POST":
+        limited, retry_in = too_many_attempts("rl_reset", limit=5, window_seconds=600)
+        if limited:
+            flash(f"Too many attempts. Try again in {retry_in} seconds.", "error")
+            return render_template("<that page>.html"), 429
+
         answer = request.form.get("answer", "").lower().strip()
 
         if check_password_hash(user.security_answer_hash, answer):
@@ -712,6 +757,7 @@ def logout():
     session.pop("logged_in", None)
     session.pop("user_id", None)
     session.pop("is_admin", None)
+    session.pop("username", None)
     return redirect(url_for("login"))  # redirect to login page
 
 @app.route("/", methods=["GET","POST"])
