@@ -250,31 +250,38 @@ def daily_closeout():
         day = datetime.utcnow().date()
         date_str = day.strftime("%Y-%m-%d")
 
-    employees = [u.username for u in Users.query.order_by(Users.username.asc()).all()]
+    users = Users.query.order_by(Users.username.asc()).all()
+    employees = [
+        {
+            "username": u.username,
+            "display": (u.display_name or u.username)
+        }
+        for u in users
+    ]
 
     if request.method == "POST":
         day = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
 
         saved = 0
-        for name in employees:
-            worked = request.form.get(f"worked_{name}") == "on"
+        for emp in employees:
+            uname = emp["username"]
+
+            worked = request.form.get(f"worked_{uname}") == "on"
             if not worked:
                 continue
 
-            h_raw = (request.form.get(f"hours_{name}") or "").strip()
-            d_raw = (request.form.get(f"deals_{name}") or "").strip()
+            h_raw = (request.form.get(f"hours_{uname}") or "").strip()
+            d_raw = (request.form.get(f"deals_{uname}") or "").strip()
 
-            # IMPORTANT: no rounding; store exactly what was entered
             hours = float(h_raw) if h_raw else 0.0
             deals = int(d_raw) if d_raw else 0
 
-            # Optional: skip totally empty row (keep or remove as you prefer)
             if hours <= 0 and deals == 0:
                 continue
 
             entry = Entry(
                 date=day,
-                employee=name,
+                employee=uname,   # store username in DB like you already do
                 shift="Daily",
                 hours=hours,
                 deals=deals,
