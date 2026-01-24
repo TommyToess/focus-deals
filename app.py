@@ -263,20 +263,43 @@ def _to_24h(h, m, ap):
     return f"{h:02d}:{m:02d}"
 
 def parse_time_text(time_text: str):
-    # normalize dash characters
+    if not time_text:
+        return None, None
+
     t = time_text.strip().lower()
     t = t.replace("–", "-").replace("—", "-")
     t = re.sub(r"\s+", "", t)
 
-    # match start-end like 4:30am-10:00am
-    m = re.match(r"(\d{1,2})(?::(\d{2}))?(am|pm)-(\d{1,2})(?::(\d{2}))?(am|pm)", t)
+    # start: h[:mm][am|pm]?  -  end: h[:mm][am|pm]?
+    m = re.match(r"^(\d{1,2})(?::(\d{2}))?(am|pm)?-(\d{1,2})(?::(\d{2}))?(am|pm)?$", t)
     if not m:
         return None, None
 
     sh, sm, sap, eh, em, eap = m.groups()
-    start = _to_24h(sh, sm, sap)
-    end = _to_24h(eh, em, eap)
-    return start, end
+    sm = sm or "00"
+    em = em or "00"
+
+    # If AM/PM only appears once, apply it to both sides
+    if sap and not eap:
+        eap = sap
+    if eap and not sap:
+        sap = eap
+
+    # Still missing both? can't safely parse
+    if not sap or not eap:
+        return None, None
+
+    def to24(h, m, ap):
+        h = int(h); m = int(m); ap = ap.lower()
+        if ap == "am":
+            if h == 12:
+                h = 0
+        else:
+            if h != 12:
+                h += 12
+        return f"{h:02d}:{m:02d}"
+
+    return to24(sh, sm, sap), to24(eh, em, eap)
 
 # ---------- Undo Stack ----------
 undo_stack = []
@@ -440,6 +463,7 @@ def admin_schedule_import_apply():
         return redirect(url_for("admin_schedule_import"))
 
     shifts = payload.get("shifts") or []
+    app.logger.info("APPLY received %s shifts. Sample: %s", len(shifts), shifts[:3])
     week_start = payload.get("week_start") or ""
 
     saved = 0
@@ -464,6 +488,7 @@ def admin_schedule_import_apply():
         start_s, end_s = parse_time_text(time_text)
         if not start_s or not end_s:
             skipped_missing += 1
+            app.logger.info("PARSE FAIL time_text=%r shift=%r", time_text, s)
             continue
 
         try:
