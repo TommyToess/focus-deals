@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="page-header">
+  <h1>Import Schedule From Photo</h1>
+</div>
+
+<div class="content-card">
+  <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+    <p class="muted">
+      Tip: crop the photo to just the schedule grid for best accuracy.
+    </p>
+
+    <input type="file" name="schedule_image" accept="image/*" required>
+
+    <div style="margin-top:12px;">
+      <button class="submit" type="submit">Upload & Parse</button>
+      <a class="submit" href="{{ url_for('admin_schedule') }}">Back</a>
+    </div>
+  </form>
+</div>
+
+{% if parsed %}
+  <div class="content-card" style="margin-top:16px;">
+    <h2 style="margin-top:0;">Review</h2>
+
+    {% if parsed.warnings and parsed.warnings|length > 0 %}
+      <div class="flash error" style="margin-bottom:12px;">
+        <b>Warnings:</b>
+        <ul>
+          {% for w in parsed.warnings %}
+            <li>{{ w }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <p class="muted">
+      Week start detected: <b>{{ parsed.week_start or "Unknown" }}</b>
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in parsed.shifts %}
+          <tr>
+            <td>{{ s.username }}</td>
+            <td>{{ s.date }}</td>
+            <td>{{ s.start_time }}</td>
+            <td>{{ s.end_time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_schedule_import_apply') }}" style="margin-top:12px;">
+      <input type="hidden" name="csrf_token" value="{{ session.csrf_token }}">
+      <input type="hidden" name="payload" value='{{ parsed|tojson }}'>
+      <input type="hidden" name="week_start" value="{{ parsed.week_start or '' }}">
+      <button class="submit" type="submit">Apply to Schedule</button>
+    </form>
+  </div>
+{% endif %}
+
+{% endblock %}

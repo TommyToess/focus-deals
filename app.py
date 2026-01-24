@@ -1,6 +1,8 @@
 # focus-deals v0.9.6 – Jan 2026
 import os
 import secrets
+import base64
+import json
 from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
@@ -8,8 +10,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy.exc import IntegrityError
-
+from pydantic import BaseModel
+from typing import Optional, List
 from openai import OpenAI
+
 client = OpenAI()
 
 app = Flask(__name__)
@@ -95,6 +99,16 @@ class ScheduleShift(db.Model):
 
     __table_args__ = (db.UniqueConstraint('employee', 'date', name='uq_schedule_employee_date'),)
 
+class ImportedShift(BaseModel):
+    username: str
+    date: str          # YYYY-MM-DD
+    start_time: str    # HH:MM 24h
+    end_time: str      # HH:MM 24h
+
+class ScheduleImportResult(BaseModel):
+    week_start: Optional[str] = None  # YYYY-MM-DD
+    shifts: List[ImportedShift] = []
+    warnings: List[str] = []
 
 # ---------- Helpers ----------
 
@@ -226,17 +240,121 @@ undo_stack = []
 
 # ---------- Routes ----------
 
-from flask import abort  # make sure this exists with your imports
+@app.route("/admin/schedule/import", methods=["GET", "POST"])
+@admin_required
+def admin_schedule_import():
+    # Roster the model must match against
+    users = Users.query.order_by(Users.display_name).all()
+    roster = [{"username": u.username, "display": (u.display_name or u.username)} for u in users]
 
-# --- login_required (only if you don't already have it) ---
-def login_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get("logged_in"):
-            return redirect(url_for("login"))
-        return f(*args, **kwargs)
-    return decorated
+    if request.method == "GET":
+        return render_template("schedule_import.html", roster=roster)
 
+    # POST: file upload
+    f = request.files.get("schedule_image")
+    if not f or not f.filename:
+        flash("Please choose an image file.", "error")
+        return render_template("schedule_import.html", roster=roster), 400
+
+    img_bytes = f.read()
+    if not img_bytes:
+        flash("That upload was empty.", "error")
+        return render_template("schedule_import.html", roster=roster), 400
+
+    # Encode image as base64 data URL
+    b64 = base64.b64encode(img_bytes).decode("utf-8")
+    data_url = f"data:image/jpeg;base64,{b64}"
+
+    prompt = f"""
+You are extracting a weekly employee schedule from a PHOTO of a printed grid schedule.
+
+You MUST match employees to one of these known people (output the username):
+{json.dumps(roster)}
+
+Rules:
+- Output ONLY shifts that are clearly scheduled (ignore blank cells).
+- The printed schedule may contain meal breaks like "M 10:30am-11:00am". IGNORE meal breaks.
+- If a printed shift is crossed out and a handwritten replacement exists and is legible, prefer the handwritten time.
+- If you are uncertain about a time or employee match, do NOT guess: skip that shift and add a warning.
+- Convert all times to 24-hour HH:MM.
+- Convert all dates to YYYY-MM-DD.
+- If you can read “Week Begin” date, set week_start to that date.
+
+Return structured output.
+""".strip()
+
+    try:
+        # Structured parse guarantees correct JSON shape in output_parsed
+        resp = client.responses.parse(
+            model="gpt-4o-2024-08-06",
+            input=[{
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": data_url},
+                ],
+            }],
+            text_format=ScheduleImportResult,
+        )
+        parsed: ScheduleImportResult = resp.output_parsed
+    except Exception as e:
+        app.logger.exception("Schedule import failed")
+        flash("Import failed. Try a clearer/cropped photo.", "error")
+        return render_template("schedule_import.html", roster=roster), 500
+
+    # Send parsed result to a review page (same template)
+    return render_template(
+        "schedule_import.html",
+        roster=roster,
+        parsed=parsed.model_dump()
+    )
+
+
+@app.route("/admin/schedule/import/apply", methods=["POST"])
+@admin_required
+def admin_schedule_import_apply():
+    raw = request.form.get("payload") or ""
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        flash("Invalid import payload.", "error")
+        return redirect(url_for("admin_schedule_import"))
+
+    shifts = payload.get("shifts") or []
+    week_start = payload.get("week_start") or request.form.get("week_start") or None
+
+    saved = 0
+    for s in shifts:
+        try:
+            username = (s.get("username") or "").strip()
+            date = datetime.strptime(s["date"], "%Y-%m-%d").date()
+            start_time = datetime.strptime(s["start_time"], "%H:%M").time()
+            end_time = datetime.strptime(s["end_time"], "%H:%M").time()
+        except Exception:
+            continue
+
+        existing = ScheduleShift.query.filter_by(employee=username, date=date).first()
+        if existing:
+            existing.start_time = start_time
+            existing.end_time = end_time
+            existing.role = None  # you said you don’t need roles
+        else:
+            db.session.add(ScheduleShift(
+                employee=username,
+                date=date,
+                start_time=start_time,
+                end_time=end_time,
+                role=None
+            ))
+        saved += 1
+
+    db.session.commit()
+    flash(f"Imported {saved} shifts.", "success")
+
+    # Redirect to admin schedule for that week if we got it
+    if week_start:
+        return redirect(url_for("admin_schedule", week_start=week_start))
+    return redirect(url_for("admin_schedule"))
 
 @app.route("/daily_closeout", methods=["GET", "POST"])
 @admin_required
