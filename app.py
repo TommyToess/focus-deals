@@ -226,11 +226,22 @@ undo_stack = []
 
 # ---------- Routes ----------
 
+from flask import abort  # make sure this exists with your imports
+
+# --- login_required (only if you don't already have it) ---
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get("logged_in"):
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
 @app.route("/daily_closeout", methods=["GET", "POST"])
 @admin_required
 def daily_closeout():
-    s = get_settings()
-    # choose a date; default today
+    # default date (today)
     date_str = request.args.get("date") or datetime.utcnow().strftime("%Y-%m-%d")
 
     try:
@@ -244,7 +255,6 @@ def daily_closeout():
     if request.method == "POST":
         day = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
 
-        # expected fields: hours_<username>, deals_<username>, worked_<username>
         saved = 0
         for name in employees:
             worked = request.form.get(f"worked_{name}") == "on"
@@ -254,17 +264,18 @@ def daily_closeout():
             h_raw = (request.form.get(f"hours_{name}") or "").strip()
             d_raw = (request.form.get(f"deals_{name}") or "").strip()
 
+            # IMPORTANT: no rounding; store exactly what was entered
             hours = float(h_raw) if h_raw else 0.0
             deals = int(d_raw) if d_raw else 0
 
-            # Skip truly empty rows (optional)
+            # Optional: skip totally empty row (keep or remove as you prefer)
             if hours <= 0 and deals == 0:
                 continue
 
             entry = Entry(
                 date=day,
                 employee=name,
-                shift="Daily",   # or let you choose later
+                shift="Daily",
                 hours=hours,
                 deals=deals,
             )
@@ -275,7 +286,7 @@ def daily_closeout():
         flash(f"Saved {saved} entries for {day.strftime('%Y-%m-%d')}.", "success")
         return redirect(url_for("daily_closeout", date=day.strftime("%Y-%m-%d")))
 
-    return render_template("daily_closeout.html", date_str=date_str, employees=employees, settings=s)
+    return render_template("daily_closeout.html", date_str=date_str, employees=employees)
 
 
 @app.route("/daily_closeout_parse", methods=["POST"])
@@ -286,15 +297,13 @@ def daily_closeout_parse():
     employees = data.get("employees") or []
 
     if not text:
-        return jsonify({"items": []})
+        return jsonify({"raw": '{"items":[]}'})
 
-    # Keep the model on a tight leash: return ONLY JSON.
     prompt = f"""
-You are helping fill out a daily work log.
 Known employees: {employees}
 
 User will describe who worked today and optionally their hours and deals.
-Return STRICT JSON only in this exact shape:
+Return STRICT JSON only:
 
 {{
   "items": [
@@ -303,8 +312,8 @@ Return STRICT JSON only in this exact shape:
 }}
 
 Rules:
-- Only use employee names from the known employees list (case-insensitive match).
-- If someone is mentioned as off / not working, set worked=false.
+- Only use employee names from the known list.
+- If someone is off, worked=false.
 - If hours not provided, hours=null.
 - If deals not provided, deals=null.
 - If deals is explicitly 0, deals=0.
@@ -322,9 +331,9 @@ Text:
             ],
             temperature=0.1,
         )
-        raw = resp.choices[0].message.content.strip()
+        raw = (resp.choices[0].message.content or "").strip()
         return jsonify({"raw": raw})
-    except Exception as e:
+    except Exception:
         app.logger.exception("daily_closeout_parse failed")
         return jsonify({"error": "parse_failed"}), 500
 
