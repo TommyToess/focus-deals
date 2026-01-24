@@ -67,15 +67,6 @@
                       >
                     </div>
 
-                    <select name="role">
-                      <option value="">(Role optional)</option>
-                      {% for r in roles %}
-                        <option value="{{ r }}" {% if s and s.role == r %}selected{% endif %}>
-                          {{ r }}
-                        </option>
-                      {% endfor %}
-                    </select>
-
                     <button type="submit" class="mini-save">Save</button>
 
                     {% if s %}
