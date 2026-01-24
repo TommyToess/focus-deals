@@ -13,6 +13,8 @@ from sqlalchemy.exc import IntegrityError
 from pydantic import BaseModel
 from typing import Optional, List
 from openai import OpenAI
+from io import BytesIO
+from PIL import Image
 
 client = OpenAI()
 
@@ -264,12 +266,26 @@ def admin_schedule_import():
     f = request.files.get("schedule_image")
     if not f or not f.filename:
         flash("Please choose an image file.", "error")
-        return render_template("schedule_import.html", roster=roster), 400
+        return render_template("schedule_import.html", roster=roster, display_map=display_map), 400
 
     img_bytes = f.read()
+    
+    im = Image.open(BytesIO(img_bytes))
+    im = im.convert("RGB")
+
+    # Resize down (keeps it readable but much smaller)
+    MAX_W = 1200
+    if im.width > MAX_W:
+        new_h = int(im.height * (MAX_W / im.width))
+        im = im.resize((MAX_W, new_h))
+
+    buf = BytesIO()
+    im.save(buf, format="JPEG", quality=75, optimize=True)
+    img_bytes = buf.getvalue()
+    
     if not img_bytes:
         flash("That upload was empty.", "error")
-        return render_template("schedule_import.html", roster=roster), 400
+        return render_template("schedule_import.html", roster=roster, display_map=display_map), 400
 
     b64 = base64.b64encode(img_bytes).decode("utf-8")
     data_url = f"data:image/jpeg;base64,{b64}"
@@ -310,7 +326,7 @@ CRITICAL RULES:
 
     try:
         resp = client.chat.completions.create(
-            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o"),
+            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini"),
             messages=[{
                 "role": "user",
                 "content": [
@@ -326,7 +342,7 @@ CRITICAL RULES:
     except Exception:
         app.logger.exception("Schedule import failed")
         flash("Import failed. Try cropping the photo to just the schedule grid (names + dates).", "error")
-        return render_template("schedule_import.html", roster=roster), 500
+        return render_template("schedule_import.html", roster=roster, display_map=display_map), 500
 
     # Shape guards so template doesn't break
     if not isinstance(parsed, dict):
