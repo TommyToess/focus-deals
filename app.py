@@ -3,6 +3,7 @@ import os
 import secrets
 import base64
 import json
+import httpx
 from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
@@ -16,7 +17,7 @@ from openai import OpenAI
 from io import BytesIO
 from PIL import Image
 
-client = OpenAI()
+client = OpenAI(http_client=httpx.Client(timeout=120.0))
 
 app = Flask(__name__)
 
@@ -282,14 +283,14 @@ def admin_schedule_import():
         im = Image.open(BytesIO(img_bytes)).convert("RGB")
 
         # Keep more detail for tiny 'am/pm'
-        MAX_W = 2200
+        MAX_W = 1700
         if im.width > MAX_W:
             new_h = int(im.height * (MAX_W / im.width))
             im = im.resize((MAX_W, new_h), Image.LANCZOS)
 
         buf = BytesIO()
         # Higher quality preserves small printed text
-        im.save(buf, format="JPEG", quality=92)  # no optimize=True (can blur text)
+        im.save(buf, format="JPEG", quality=85)
         img_bytes = buf.getvalue()
     except Exception:
         app.logger.exception("Image preprocessing failed; continuing with original bytes")
@@ -348,7 +349,7 @@ CONFIDENCE:
 
     try:
         resp = client.chat.completions.create(
-            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o"),
+            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini"),
             messages=[{
                 "role": "user",
                 "content": [
