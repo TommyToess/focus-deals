@@ -4,6 +4,7 @@ import secrets
 import base64
 import json
 import httpx
+import re
 from flask import Flask, flash, render_template, request, redirect, url_for, session, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
@@ -251,6 +252,32 @@ def _looks_insane(start_t, end_t):
         dur += 24 * 60
     return dur < 60 or dur > 16 * 60
 
+def _to_24h(h, m, ap):
+    h = int(h)
+    m = int(m or 0)
+    ap = ap.lower()
+    if ap == "am":
+        if h == 12: h = 0
+    else:  # pm
+        if h != 12: h += 12
+    return f"{h:02d}:{m:02d}"
+
+def parse_time_text(time_text: str):
+    # normalize dash characters
+    t = time_text.strip().lower()
+    t = t.replace("–", "-").replace("—", "-")
+    t = re.sub(r"\s+", "", t)
+
+    # match start-end like 4:30am-10:00am
+    m = re.match(r"(\d{1,2})(?::(\d{2}))?(am|pm)-(\d{1,2})(?::(\d{2}))?(am|pm)", t)
+    if not m:
+        return None, None
+
+    sh, sm, sap, eh, em, eap = m.groups()
+    start = _to_24h(sh, sm, sap)
+    end = _to_24h(eh, em, eap)
+    return start, end
+
 # ---------- Undo Stack ----------
 undo_stack = []
 
@@ -306,18 +333,11 @@ Known employees (match to these, output ONLY the username):
 
 Return STRICT JSON ONLY in this exact shape:
 {{
-  "week_start": "YYYY-MM-DD" or null,
+  "week_start": "...",
   "shifts": [
-    {{
-      "username": "...",
-      "date": "YYYY-MM-DD",
-      "raw_text": "EXACT text you read from the cell for the MAIN shift time range",
-      "start_time": "HH:MM" or null,
-      "end_time": "HH:MM" or null,
-      "confidence": 0.0
-    }}
+    {"username":"...", "date":"YYYY-MM-DD", "raw_text":"...", "time_text":"...", "confidence":0.0}
   ],
-  "warnings": ["..."]
+  "warnings":[]
 }}
 
 CRITICAL RULES:
@@ -334,6 +354,11 @@ TIME CONSTRAINTS:
 - If AM/PM is visible, use it.
 - If AM/PM is unclear, infer AM/PM to produce a reasonable duration within these bounds.
 - Convert to 24-hour HH:MM (only if you can extract a clear time range).
+
+TIME EXTRACTION:
+- For each MAIN shift, output "time_text" EXACTLY as it appears, e.g. "4:30am-10:00am" or "12:00pm-4:30pm".
+- Do NOT convert to 24-hour time in the model.
+- Do NOT infer AM/PM. If AM/PM isn’t visible, set time_text to null and confidence < 0.55.
 
 HANDWRITING:
 - If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
@@ -420,7 +445,13 @@ def admin_schedule_import_apply():
             skipped_low_conf += 1
             continue
 
-        if not s.get("start_time") or not s.get("end_time"):
+        time_text = (s.get("time_text") or "").strip()
+        if not time_text:
+            skipped_missing += 1
+            continue
+
+        start_s, end_s = parse_time_text(time_text)
+        if not start_s or not end_s:
             skipped_missing += 1
             continue
 
