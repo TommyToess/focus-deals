@@ -351,7 +351,17 @@ Text:
 @admin_required
 def admin_dashboard():
     s = get_settings()
-    return render_template("admin_dashboard.html", settings=s)
+    employees = Users.query.order_by(Users.display_name).all()
+    shifts = ["Open", "Mid", "Close"]
+    today = datetime.today().date().strftime("%Y-%m-%d")
+
+    return render_template(
+        "admin_dashboard.html",
+        settings=s,
+        employees=employees,
+        shifts=shifts,
+        today=today
+    )
 
 @app.route("/admin/schedule")
 @admin_required
@@ -968,7 +978,9 @@ def get_entry(id):
 @admin_required
 def edit_entry(id):
     e = Entry.query.get_or_404(id)
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
+    if not data:
+        return jsonify({"error": "Missing JSON body"}), 400
     e.employee = data.get("employee", e.employee)
     e.date = datetime.strptime(data.get("date"), "%Y-%m-%d").date() if data.get("date") else e.date
     e.shift = data.get("shift", e.shift)
