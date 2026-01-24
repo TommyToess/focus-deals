@@ -307,72 +307,64 @@ def admin_schedule_import():
 
     # ---------- Improve OCR/vision quality ----------
     try:
-        im = ImageOps.exif_transpose(Image.open(BytesIO(img_bytes))).convert("RGB")
-        im = ImageEnhance.Contrast(im).enhance(1.25)
-        im = ImageEnhance.Sharpness(im).enhance(1.3)
-        
-        # Keep more detail for tiny 'am/pm'
+        im = Image.open(BytesIO(img_bytes))
+        im = ImageOps.exif_transpose(im)      # fixes iPhone rotation
+        im = im.convert("RGB")
+
+        # Boost readability of tiny 'am/pm'
+        im = ImageEnhance.Contrast(im).enhance(1.35)
+        im = ImageEnhance.Sharpness(im).enhance(1.35)
+
+        # Resize to a good balance for speed + clarity
         MAX_W = 1700
         if im.width > MAX_W:
             new_h = int(im.height * (MAX_W / im.width))
             im = im.resize((MAX_W, new_h), Image.LANCZOS)
 
         buf = BytesIO()
-        # Higher quality preserves small printed text
-        im.save(buf, format="JPEG", quality=85)
+        im.save(buf, format="JPEG", quality=88)
         img_bytes = buf.getvalue()
     except Exception:
         app.logger.exception("Image preprocessing failed; continuing with original bytes")
+
 
     b64 = base64.b64encode(img_bytes).decode("utf-8")
     data_url = f"data:image/jpeg;base64,{b64}"
 
     prompt = f"""
-Extract a weekly employee schedule from a PHOTO of a printed grid schedule.
+    Extract a weekly employee schedule from a PHOTO of a printed grid schedule.
 
-Known employees (match to these, output ONLY the username):
-{json.dumps(roster)}
+    Known employees (match to these; output ONLY the username from this list):
+    {json.dumps(roster)}
 
-Return STRICT JSON ONLY in this exact shape:
-{{
-  "week_start": "...",
-  "shifts": [
-    {{"username":"...", "date":"YYYY-MM-DD", "raw_text":"...", "time_text":"...", "confidence":0.0}}
-  ],
-  "warnings":[]
-}}
+    Return STRICT JSON ONLY in this exact shape:
+    {{
+    "week_start": "YYYY-MM-DD" or null,
+    "shifts": [
+        {{
+        "username": "...",
+        "date": "YYYY-MM-DD",
+        "raw_text": "EXACT text you read from the cell for the MAIN shift line",
+        "time_text": "EXACT time range as printed (e.g. 4:30am-10:00am) or null",
+        "confidence": 0.0
+        }}
+    ],
+    "warnings": ["..."]
+    }}
 
-CRITICAL RULES:
-- Extract the MAIN shift per employee per day.
-- A cell may contain multiple time ranges.
-- IGNORE meal breaks / minor entries that begin with "M" (example: "M 10:30am-11:00am").
-- The MAIN shift is the NON-"M" time range with the LONGEST duration that fits constraints.
-- raw_text must include the exact time range you chose (include AM/PM if present).
-
-TIME CONSTRAINTS:
-- Earliest possible start time is 04:30.
-- Latest possible end time is 23:15.
-- Typical shift length is 4–10 hours (rarely <3, rarely >12).
-- If AM/PM is visible, use it.
-- If AM/PM is unclear, infer AM/PM to produce a reasonable duration within these bounds.
-- Convert to 24-hour HH:MM (only if you can extract a clear time range).
-
-TIME EXTRACTION:
-- For each MAIN shift, output "time_text" EXACTLY as it appears, e.g. "4:30am-10:00am" or "12:00pm-4:30pm".
-- Do NOT convert to 24-hour time in the model.
-- Do NOT infer AM/PM. If AM/PM isn’t visible, set time_text to null and confidence < 0.55.
-
-HANDWRITING:
-- If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
-
-BLANK CELLS:
-- If blank, output nothing (do NOT output "Off").
-
-CONFIDENCE:
-- 0.80–1.00 if AM/PM visible or inference is unambiguous.
-- 0.55–0.79 if inferred but strongly fits constraints.
-- <0.55 if multiple interpretations or cell is hard to read.
-""".strip()
+    RULES:
+    - Extract the MAIN shift per employee per day.
+    - A cell may contain multiple time ranges.
+    - IGNORE meal breaks / minor entries that begin with "M" (example: "M 10:30am-11:00am").
+    - The MAIN shift is the NON-"M" time range with the LONGEST duration.
+    - raw_text must include the exact text you used.
+    - time_text must be the exact time range you see INCLUDING am/pm if present.
+    - DO NOT convert to 24-hour time in the model.
+    - DO NOT guess/infer am/pm. If am/pm is not visible, set time_text to null and lower confidence.
+    - If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
+    - If a cell is blank, output nothing for that employee/date (do NOT output "Off").
+    - Use higher confidence when the time_text is clear and includes am/pm.
+    """.strip()
 
     try:
         resp = client.chat.completions.create(
@@ -464,9 +456,9 @@ def admin_schedule_import_apply():
 
             date = datetime.strptime(s["date"], "%Y-%m-%d").date()
 
-            # Convert the parsed 24h strings to time objects
-            #start_time = datetime.strptime(start_s, "%H:%M").time()
-            #end_time = datetime.strptime(end_s, "%H:%M").time()
+            # Convert parsed 24-hour strings to time objects
+            start_time = datetime.strptime(start_s, "%H:%M").time()
+            end_time = datetime.strptime(end_s, "%H:%M").time()
         except Exception:
             skipped_missing += 1
             continue
