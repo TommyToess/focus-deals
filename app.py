@@ -18,7 +18,7 @@ from openai import OpenAI
 from io import BytesIO
 from PIL import Image, ImageOps, ImageEnhance
 
-client = OpenAI(http_client=httpx.Client(timeout=120.0))
+client = OpenAI(http_client=httpx.Client(timeout=180.0))
 
 app = Flask(__name__)
 
@@ -316,7 +316,7 @@ def admin_schedule_import():
         im = ImageEnhance.Sharpness(im).enhance(1.35)
 
         # Resize to a good balance for speed + clarity
-        MAX_W = 1700
+        MAX_W = 1400
         if im.width > MAX_W:
             new_h = int(im.height * (MAX_W / im.width))
             im = im.resize((MAX_W, new_h), Image.LANCZOS)
