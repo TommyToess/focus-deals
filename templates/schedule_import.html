@@ -56,7 +56,7 @@
         <tbody>
           {% for s in parsed.shifts %}
           <tr {% if s.confidence < 0.75 or not s.start_time or not s.end_time %}style="opacity:0.55;"{% endif %}>
-            <td>{{ s.username }}</td>
+            <td>{{ display_map.get(s.username, s.username) }}</td>
             <td>{{ s.date }}</td>
             <td>{{ s.start_time or "-" }}</td>
             <td>{{ s.end_time or "-" }}</td>

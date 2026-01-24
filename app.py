@@ -255,9 +255,10 @@ def admin_schedule_import():
     # roster: used for matching names -> usernames
     users = Users.query.order_by(Users.display_name).all()
     roster = [{"username": u.username, "display": (u.display_name or u.username)} for u in users]
+    display_map = {r["username"]: r["display"] for r in roster}
 
     if request.method == "GET":
-        return render_template("schedule_import.html", roster=roster)
+        return render_template("schedule_import.html", roster=roster, display_map=display_map)
 
     # POST: image upload
     f = request.files.get("schedule_image")
@@ -350,8 +351,7 @@ CRITICAL RULES:
         })
     parsed["shifts"] = fixed
 
-    return render_template("schedule_import.html", roster=roster, parsed=parsed)
-
+    return render_template("schedule_import.html", roster=roster, display_map=display_map, parsed=parsed)
 
 @app.route("/admin/schedule/import/apply", methods=["POST"])
 @admin_required
