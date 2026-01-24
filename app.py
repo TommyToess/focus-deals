@@ -226,6 +226,108 @@ undo_stack = []
 
 # ---------- Routes ----------
 
+@app.route("/daily_closeout", methods=["GET", "POST"])
+@admin_required
+def daily_closeout():
+    s = get_settings()
+    # choose a date; default today
+    date_str = request.args.get("date") or datetime.utcnow().strftime("%Y-%m-%d")
+
+    try:
+        day = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        day = datetime.utcnow().date()
+        date_str = day.strftime("%Y-%m-%d")
+
+    employees = [u.username for u in Users.query.order_by(Users.username.asc()).all()]
+
+    if request.method == "POST":
+        day = datetime.strptime(request.form["date"], "%Y-%m-%d").date()
+
+        # expected fields: hours_<username>, deals_<username>, worked_<username>
+        saved = 0
+        for name in employees:
+            worked = request.form.get(f"worked_{name}") == "on"
+            if not worked:
+                continue
+
+            h_raw = (request.form.get(f"hours_{name}") or "").strip()
+            d_raw = (request.form.get(f"deals_{name}") or "").strip()
+
+            hours = float(h_raw) if h_raw else 0.0
+            deals = int(d_raw) if d_raw else 0
+
+            # Skip truly empty rows (optional)
+            if hours <= 0 and deals == 0:
+                continue
+
+            entry = Entry(
+                date=day,
+                employee=name,
+                shift="Daily",   # or let you choose later
+                hours=hours,
+                deals=deals,
+            )
+            db.session.add(entry)
+            saved += 1
+
+        db.session.commit()
+        flash(f"Saved {saved} entries for {day.strftime('%Y-%m-%d')}.", "success")
+        return redirect(url_for("daily_closeout", date=day.strftime("%Y-%m-%d")))
+
+    return render_template("daily_closeout.html", date_str=date_str, employees=employees, settings=s)
+
+
+@app.route("/daily_closeout_parse", methods=["POST"])
+@admin_required_api
+def daily_closeout_parse():
+    data = request.get_json(force=True) or {}
+    text = (data.get("text") or "").strip()
+    employees = data.get("employees") or []
+
+    if not text:
+        return jsonify({"items": []})
+
+    # Keep the model on a tight leash: return ONLY JSON.
+    prompt = f"""
+You are helping fill out a daily work log.
+Known employees: {employees}
+
+User will describe who worked today and optionally their hours and deals.
+Return STRICT JSON only in this exact shape:
+
+{{
+  "items": [
+    {{"employee":"<name from known list>", "worked": true/false, "hours": <number or null>, "deals": <int or null>}}
+  ]
+}}
+
+Rules:
+- Only use employee names from the known employees list (case-insensitive match).
+- If someone is mentioned as off / not working, set worked=false.
+- If hours not provided, hours=null.
+- If deals not provided, deals=null.
+- If deals is explicitly 0, deals=0.
+- Do not invent people.
+Text:
+{text}
+""".strip()
+
+    try:
+        resp = client.chat.completions.create(
+            model=os.environ.get("OPENAI_MODEL", "gpt-4.1-mini"),
+            messages=[
+                {"role": "system", "content": "Return only valid JSON. No extra text."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.1,
+        )
+        raw = resp.choices[0].message.content.strip()
+        return jsonify({"raw": raw})
+    except Exception as e:
+        app.logger.exception("daily_closeout_parse failed")
+        return jsonify({"error": "parse_failed"}), 500
+
 @app.route("/admin")
 @admin_required
 def admin_dashboard():
