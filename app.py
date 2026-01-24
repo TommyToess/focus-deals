@@ -613,7 +613,6 @@ Text:
                 {"role": "system", "content": "Return only valid JSON. No extra text."},
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.1,
         )
         raw = (resp.choices[0].message.content or "").strip()
         return jsonify({"raw": raw})
