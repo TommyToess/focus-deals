@@ -354,25 +354,31 @@ def admin_schedule_import():
     }}
 
 
-    RULES:
+    CRITICAL RULES:
     - Extract the MAIN shift per employee per day.
     - A cell may contain multiple time ranges.
     - IGNORE meal breaks / minor entries that begin with "M" (example: "M 10:30am-11:00am").
-    - The MAIN shift is the NON-"M" time range with the LONGEST duration.
-    - raw_text must include the exact text you used.
-    - time_text must be the exact time range you see INCLUDING am/pm if present.
-    - DO NOT convert to 24-hour time in the model.
-    - DO NOT guess/infer am/pm. If am/pm is not visible, set time_text to null and lower confidence.
-    - If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
-    - If a cell is blank, output nothing for that employee/date (do NOT output "Off").
-    - Use higher confidence when the time_text is clear and includes am/pm.
-    
-    DATE MAPPING (VERY IMPORTANT):
-    - The schedule has columns for Sat 01/24, Sun 01/25, Mon 01/26, Tue 01/27, Wed 01/28, Thu 01/29, Fri 01/30.
-    - You MUST assign each shift to the correct column date.
-    - Do NOT default all rows to week_start.
-    - If you cannot read a column header, add a warning and skip that column.
+    - The MAIN shift is the NON-"M" time range with the LONGEST duration that fits constraints.
+    - raw_text must include the exact time range you chose (include AM/PM if present).
 
+    TIME CONSTRAINTS:
+    - Earliest possible start time is 04:30.
+    - Latest possible end time is 23:15.
+    - Typical shift length is 4–10 hours (rarely <3, rarely >12).
+    - If AM/PM is visible, use it.
+    - If AM/PM is unclear, infer AM/PM to produce a reasonable duration within these bounds.
+    - Convert to 24-hour HH:MM (only if you can extract a clear time range).
+
+    HANDWRITING:
+    - If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
+
+    BLANK CELLS:
+    - If blank, output nothing (do NOT output "Off").
+
+    CONFIDENCE:
+    - 0.80–1.00 if AM/PM visible or inference is unambiguous.
+    - 0.55–0.79 if inferred but strongly fits constraints.
+    - <0.55 if multiple interpretations or cell is hard to read.
     """.strip()
 
     try:
