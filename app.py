@@ -269,6 +269,49 @@ def parse_time_text(time_text: str):
     t = t.replace("–", "-").replace("—", "-")
     t = re.sub(r"\s+", "", t)
 
+    # 1) 24-hour format: HH:MM-HH:MM  (example: 04:30-13:30)
+    m24 = re.match(r"^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$", t)
+    if m24:
+        sh, sm, eh, em = m24.groups()
+        return f"{sh}:{sm}", f"{eh}:{em}"
+
+    # 2) 12-hour format with optional minutes and optional am/pm on either side
+    m12 = re.match(r"^(\d{1,2})(?::(\d{2}))?(am|pm)?-(\d{1,2})(?::(\d{2}))?(am|pm)?$", t)
+    if not m12:
+        return None, None
+
+    sh, sm, sap, eh, em, eap = m12.groups()
+    sm = sm or "00"
+    em = em or "00"
+
+    # If AM/PM only appears once, apply it to both sides
+    if sap and not eap:
+        eap = sap
+    if eap and not sap:
+        sap = eap
+
+    # If still missing both, can't safely parse
+    if not sap or not eap:
+        return None, None
+
+    def to24(h, m, ap):
+        h = int(h); m = int(m); ap = ap.lower()
+        if ap == "am":
+            if h == 12:
+                h = 0
+        else:
+            if h != 12:
+                h += 12
+        return f"{h:02d}:{m:02d}"
+
+    return to24(sh, sm, sap), to24(eh, em, eap)
+    if not time_text:
+        return None, None
+
+    t = time_text.strip().lower()
+    t = t.replace("–", "-").replace("—", "-")
+    t = re.sub(r"\s+", "", t)
+
     # start: h[:mm][am|pm]?  -  end: h[:mm][am|pm]?
     m = re.match(r"^(\d{1,2})(?::(\d{2}))?(am|pm)?-(\d{1,2})(?::(\d{2}))?(am|pm)?$", t)
     if not m:
@@ -389,7 +432,7 @@ def admin_schedule_import():
     - Typical shift length is 4–10 hours (rarely <3, rarely >12).
     - If AM/PM is visible, use it.
     - If AM/PM is unclear, infer AM/PM to produce a reasonable duration within these bounds.
-    - Convert to 24-hour HH:MM (only if you can extract a clear time range).
+    - time_text may be either 12-hour with am/pm (preferred) OR 24-hour HH:MM-HH:MM.
 
     HANDWRITING:
     - If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
