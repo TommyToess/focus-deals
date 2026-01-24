@@ -269,23 +269,26 @@ def admin_schedule_import():
         return render_template("schedule_import.html", roster=roster, display_map=display_map), 400
 
     img_bytes = f.read()
-    
-    im = Image.open(BytesIO(img_bytes))
-    im = im.convert("RGB")
-
-    # Resize down (keeps it readable but much smaller)
-    MAX_W = 1200
-    if im.width > MAX_W:
-        new_h = int(im.height * (MAX_W / im.width))
-        im = im.resize((MAX_W, new_h))
-
-    buf = BytesIO()
-    im.save(buf, format="JPEG", quality=75, optimize=True)
-    img_bytes = buf.getvalue()
-    
     if not img_bytes:
         flash("That upload was empty.", "error")
         return render_template("schedule_import.html", roster=roster, display_map=display_map), 400
+
+    # ---------- Improve OCR/vision quality ----------
+    try:
+        im = Image.open(BytesIO(img_bytes)).convert("RGB")
+
+        # Keep more detail for tiny 'am/pm'
+        MAX_W = 2200
+        if im.width > MAX_W:
+            new_h = int(im.height * (MAX_W / im.width))
+            im = im.resize((MAX_W, new_h), Image.LANCZOS)
+
+        buf = BytesIO()
+        # Higher quality preserves small printed text
+        im.save(buf, format="JPEG", quality=92)  # no optimize=True (can blur text)
+        img_bytes = buf.getvalue()
+    except Exception:
+        app.logger.exception("Image preprocessing failed; continuing with original bytes")
 
     b64 = base64.b64encode(img_bytes).decode("utf-8")
     data_url = f"data:image/jpeg;base64,{b64}"
@@ -303,7 +306,7 @@ Return STRICT JSON ONLY in this exact shape:
     {{
       "username": "...",
       "date": "YYYY-MM-DD",
-      "raw_text": "EXACT text you read from the cell for the MAIN shift line",
+      "raw_text": "EXACT text you read from the cell for the MAIN shift time range",
       "start_time": "HH:MM" or null,
       "end_time": "HH:MM" or null,
       "confidence": 0.0
@@ -313,34 +316,35 @@ Return STRICT JSON ONLY in this exact shape:
 }}
 
 CRITICAL RULES:
-- ONLY extract the MAIN shift per employee per day.
-- IGNORE meal breaks / minor entries that begin with "M" (example: "M 10:30am-11:00am"). Do NOT output them.
-- Prefer the line in the cell that includes a ROLE word like Cashier, Store Manager, Assistant Manager, Shift Lead.
-- raw_text MUST be exactly what you see (include AM/PM if present).
+- Extract the MAIN shift per employee per day.
+- A cell may contain multiple time ranges.
+- IGNORE meal breaks / minor entries that begin with "M" (example: "M 10:30am-11:00am").
+- The MAIN shift is the NON-"M" time range with the LONGEST duration that fits constraints.
+- raw_text must include the exact time range you chose (include AM/PM if present).
 
-TIME RULES (VERY IMPORTANT):
+TIME CONSTRAINTS:
 - Earliest possible start time is 04:30.
 - Latest possible end time is 23:15.
-- Typical shift length is 4 to 10 hours (rarely shorter than 3 hours, rarely longer than 12).
-- If AM/PM is clearly visible in the cell, use it.
-- If AM/PM is unclear or missing, you MUST infer AM/PM to fit the constraints above and produce a reasonable duration.
-- Convert times to 24-hour HH:MM.
+- Typical shift length is 4–10 hours (rarely <3, rarely >12).
+- If AM/PM is visible, use it.
+- If AM/PM is unclear, infer AM/PM to produce a reasonable duration within these bounds.
+- Convert to 24-hour HH:MM (only if you can extract a clear time range).
 
 HANDWRITING:
-- If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time (and include that in raw_text).
+- If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
 
 BLANK CELLS:
-- If a cell is blank, output nothing (do NOT output "Off").
+- If blank, output nothing (do NOT output "Off").
 
 CONFIDENCE:
-- confidence should be high (0.8-1.0) when AM/PM is clearly visible or inference is unambiguous.
-- confidence should be medium (0.55-0.79) when you inferred AM/PM but it still strongly fits the constraints.
-- confidence should be low (<0.55) when the cell is hard to read, multiple interpretations exist, or the time range is unclear.
+- 0.80–1.00 if AM/PM visible or inference is unambiguous.
+- 0.55–0.79 if inferred but strongly fits constraints.
+- <0.55 if multiple interpretations or cell is hard to read.
 """.strip()
 
     try:
         resp = client.chat.completions.create(
-            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini"),
+            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o"),
             messages=[{
                 "role": "user",
                 "content": [
@@ -355,10 +359,10 @@ CONFIDENCE:
         parsed = json.loads(raw)
     except Exception:
         app.logger.exception("Schedule import failed")
-        flash("Import failed. Try cropping the photo to just the schedule grid (names + dates).", "error")
+        flash("Import failed. Try cropping the photo to only the schedule grid (names + dates).", "error")
         return render_template("schedule_import.html", roster=roster, display_map=display_map), 500
 
-    # Shape guards so template doesn't break
+    # Shape guards
     if not isinstance(parsed, dict):
         parsed = {"week_start": None, "shifts": [], "warnings": ["Model returned invalid format."]}
 
@@ -366,7 +370,7 @@ CONFIDENCE:
     parsed.setdefault("shifts", [])
     parsed.setdefault("warnings", [])
 
-    # Normalize shift objects (avoid KeyError in template)
+    # Normalize shift objects
     fixed = []
     for s in parsed["shifts"]:
         if not isinstance(s, dict):
@@ -382,6 +386,7 @@ CONFIDENCE:
     parsed["shifts"] = fixed
 
     return render_template("schedule_import.html", roster=roster, display_map=display_map, parsed=parsed)
+
 
 @app.route("/admin/schedule/import/apply", methods=["POST"])
 @admin_required
