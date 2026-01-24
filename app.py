@@ -383,7 +383,7 @@ def admin_schedule_import():
 
     try:
         resp = client.chat.completions.create(
-            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini"),
+            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-5-mini"),
             messages=[{
                 "role": "user",
                 "content": [
