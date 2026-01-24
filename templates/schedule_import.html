@@ -47,19 +47,17 @@
           <tr>
             <th>Employee</th>
             <th>Date</th>
-            <th>Start</th>
-            <th>End</th>
+            <th>Time</th>
             <th>Conf</th>
             <th>Raw text read</th>
           </tr>
         </thead>
         <tbody>
           {% for s in parsed.shifts %}
-          <tr {% if s.confidence < 0.75 or not s.start_time or not s.end_time %}style="opacity:0.55;"{% endif %}>
+          <tr {% if s.confidence < 0.55 or not s.time_text %}style="opacity:0.55;"{% endif %}>
             <td>{{ display_map.get(s.username, s.username) }}</td>
             <td>{{ s.date }}</td>
-            <td>{{ s.start_time or "-" }}</td>
-            <td>{{ s.end_time or "-" }}</td>
+            <td>{{ s.time_text or "-" }}</td>
             <td>{{ "%.2f"|format(s.confidence) }}</td>
             <td style="max-width:420px; white-space:normal;">{{ s.raw_text }}</td>
           </tr>
@@ -69,7 +67,7 @@
     </div>
 
     <p class="muted" style="margin-top:10px;">
-      Rows faded out are <b>not applied</b> (confidence &lt; 0.75 or missing times).
+      Rows faded out are <b>not applied</b> (confidence &lt; 0.55 or missing time text).
     </p>
 
     <form method="POST" action="{{ url_for('admin_schedule_import_apply') }}" style="margin-top:12px;">

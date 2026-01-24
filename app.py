@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from openai import OpenAI
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageOps, ImageEnhance
 
 client = OpenAI(http_client=httpx.Client(timeout=120.0))
 
@@ -307,8 +307,10 @@ def admin_schedule_import():
 
     # ---------- Improve OCR/vision quality ----------
     try:
-        im = Image.open(BytesIO(img_bytes)).convert("RGB")
-
+        im = ImageOps.exif_transpose(Image.open(BytesIO(img_bytes))).convert("RGB")
+        im = ImageEnhance.Contrast(im).enhance(1.25)
+        im = ImageEnhance.Sharpness(im).enhance(1.3)
+        
         # Keep more detail for tiny 'am/pm'
         MAX_W = 1700
         if im.width > MAX_W:
@@ -335,7 +337,7 @@ Return STRICT JSON ONLY in this exact shape:
 {{
   "week_start": "...",
   "shifts": [
-    {"username":"...", "date":"YYYY-MM-DD", "raw_text":"...", "time_text":"...", "confidence":0.0}
+    {{"username":"...", "date":"YYYY-MM-DD", "raw_text":"...", "time_text":"...", "confidence":0.0}}
   ],
   "warnings":[]
 }}
@@ -402,18 +404,18 @@ CONFIDENCE:
 
     # Normalize shift objects
     fixed = []
-    for s in parsed["shifts"]:
+    for s in (parsed.get("shifts") or []):
         if not isinstance(s, dict):
             continue
         fixed.append({
-            "username": (s.get("username") or "").strip(),
-            "date": s.get("date"),
+            "username": (s.get("username") or "").strip().lower(),
+            "date": (s.get("date") or "").strip(),
             "raw_text": s.get("raw_text") or "",
-            "start_time": s.get("start_time"),
-            "end_time": s.get("end_time"),
+            "time_text": s.get("time_text"),  # keep this!
             "confidence": float(s.get("confidence") or 0.0),
         })
     parsed["shifts"] = fixed
+
 
     return render_template("schedule_import.html", roster=roster, display_map=display_map, parsed=parsed)
 
@@ -456,13 +458,15 @@ def admin_schedule_import_apply():
             continue
 
         try:
-            username = (s.get("username") or "").strip()
+            username = (s.get("username") or "").strip().lower()
             if not username:
                 continue
 
             date = datetime.strptime(s["date"], "%Y-%m-%d").date()
-            start_time = datetime.strptime(s["start_time"], "%H:%M").time()
-            end_time = datetime.strptime(s["end_time"], "%H:%M").time()
+
+            # Convert the parsed 24h strings to time objects
+            #start_time = datetime.strptime(start_s, "%H:%M").time()
+            #end_time = datetime.strptime(end_s, "%H:%M").time()
         except Exception:
             skipped_missing += 1
             continue
@@ -827,8 +831,8 @@ def schedule_set():
         return redirect(url_for("admin_schedule", week_start=request.form.get("week_start")))
 
 
-    start_time = datetime.strptime(start_raw, "%H:%M").time()
-    end_time = datetime.strptime(end_raw, "%H:%M").time()
+    #start_time = datetime.strptime(start_raw, "%H:%M").time()
+    #end_time = datetime.strptime(end_raw, "%H:%M").time()
 
     existing = ScheduleShift.query.filter_by(employee=employee, date=date).first()
     if existing:
