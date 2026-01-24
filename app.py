@@ -34,8 +34,6 @@ app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 
 serializer = URLSafeTimedSerializer(app.secret_key)
 
-app.jinja_env.globals["csrf_token"] = csrf_token
-
 def generate_reset_token(user_id):
     return serializer.dumps(user_id, salt="password-reset")
 
@@ -184,6 +182,8 @@ def csrf_token():
     if "csrf_token" not in session:
         session["csrf_token"] = secrets.token_urlsafe(32)
     return session["csrf_token"]
+
+app.jinja_env.globals["csrf_token"] = csrf_token
 
 @app.before_request
 def csrf_protect():
