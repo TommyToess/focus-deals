@@ -307,19 +307,22 @@ def daily_closeout_parse():
         return jsonify({"raw": '{"items":[]}'})
 
     prompt = f"""
-Known employees: {employees}
+Known employees (use ONLY these):
+{employees}
 
 User will describe who worked today and optionally their hours and deals.
+
 Return STRICT JSON only:
 
 {{
   "items": [
-    {{"employee":"<name from known list>", "worked": true/false, "hours": <number or null>, "deals": <int or null>}}
+    {{"username":"<username from known list>", "worked": true/false, "hours": <number or null>, "deals": <int or null>}}
   ]
 }}
 
 Rules:
-- Only use employee names from the known list.
+- Match either username OR display name, but OUTPUT the username.
+- Only output usernames that exist in the known list.
 - If someone is off, worked=false.
 - If hours not provided, hours=null.
 - If deals not provided, deals=null.

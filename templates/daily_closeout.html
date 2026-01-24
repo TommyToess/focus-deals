@@ -39,17 +39,20 @@
           </tr>
         </thead>
         <tbody>
-          {% for name in employees %}
-          <tr>
-            <td><input type="checkbox" name="worked_{{name}}" id="worked_{{name}}"></td>
-            <td>{{ name }}</td>
-            <td>
-              <!-- IMPORTANT: step="any" so it accepts exactly what you type (8.10, 6.33, etc.) -->
-              <input type="number" step="any" min="0" name="hours_{{name}}" id="hours_{{name}}" value="">
-            </td>
-            <td><input type="number" min="0" name="deals_{{name}}" id="deals_{{name}}" value="0"></td>
-          </tr>
-          {% endfor %}
+        {% for emp in employees %}
+        <tr>
+        <td><input type="checkbox" name="worked_{{emp.username}}" id="worked_{{emp.username}}"></td>
+        <td>{{ emp.display }}</td>
+        <td>
+            <input type="number" step="any" min="0"
+                name="hours_{{emp.username}}" id="hours_{{emp.username}}" value="">
+        </td>
+        <td>
+            <input type="number" min="0"
+                name="deals_{{emp.username}}" id="deals_{{emp.username}}" value="0">
+        </td>
+        </tr>
+        {% endfor %}
         </tbody>
       </table>
     </div>
@@ -102,12 +105,12 @@
     const items = parsed.items || [];
 
     for (const it of items) {
-      const name = it.employee;
-      if (!name) continue;
+      const uname = it.username;
+        if (!uname) continue;
 
-      const w = document.getElementById(`worked_${name}`);
-      const h = document.getElementById(`hours_${name}`);
-      const d = document.getElementById(`deals_${name}`);
+        const w = document.getElementById(`worked_${uname}`);
+        const h = document.getElementById(`hours_${uname}`);
+        const d = document.getElementById(`deals_${uname}`);
 
       if (w) w.checked = !!it.worked;
 
