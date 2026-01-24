@@ -392,7 +392,6 @@ def admin_schedule_import():
                 ],
             }],
             response_format={"type": "json_object"},
-            temperature=0.1,
         )
         raw = (resp.choices[0].message.content or "").strip()
         app.logger.info("MODEL RAW OUTPUT: %s", raw[:2000])
@@ -613,6 +612,7 @@ Text:
                 {"role": "system", "content": "Return only valid JSON. No extra text."},
                 {"role": "user", "content": prompt},
             ],
+            temperature=0.1,
         )
         raw = (resp.choices[0].message.content or "").strip()
         return jsonify({"raw": raw})
