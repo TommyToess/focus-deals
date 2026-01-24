@@ -317,11 +317,25 @@ CRITICAL RULES:
 - IGNORE meal breaks / minor entries that begin with "M" (example: "M 10:30am-11:00am"). Do NOT output them.
 - Prefer the line in the cell that includes a ROLE word like Cashier, Store Manager, Assistant Manager, Shift Lead.
 - raw_text MUST be exactly what you see (include AM/PM if present).
-- If AM/PM is unclear OR the time is uncertain, set start_time/end_time to null and confidence <= 0.4 and add a warning.
-- Do NOT guess AM vs PM.
+
+TIME RULES (VERY IMPORTANT):
+- Earliest possible start time is 04:30.
+- Latest possible end time is 23:15.
+- Typical shift length is 4 to 10 hours (rarely shorter than 3 hours, rarely longer than 12).
+- If AM/PM is clearly visible in the cell, use it.
+- If AM/PM is unclear or missing, you MUST infer AM/PM to fit the constraints above and produce a reasonable duration.
+- Convert times to 24-hour HH:MM.
+
+HANDWRITING:
 - If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time (and include that in raw_text).
+
+BLANK CELLS:
 - If a cell is blank, output nothing (do NOT output "Off").
-- Convert times to 24-hour HH:MM only when confident.
+
+CONFIDENCE:
+- confidence should be high (0.8-1.0) when AM/PM is clearly visible or inference is unambiguous.
+- confidence should be medium (0.55-0.79) when you inferred AM/PM but it still strongly fits the constraints.
+- confidence should be low (<0.55) when the cell is hard to read, multiple interpretations exist, or the time range is unclear.
 """.strip()
 
     try:
@@ -392,7 +406,7 @@ def admin_schedule_import_apply():
             continue
 
         conf = float(s.get("confidence") or 0.0)
-        if conf < 0.75:
+        if conf < 0.55:
             skipped_low_conf += 1
             continue
 
