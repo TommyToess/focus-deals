@@ -34,6 +34,8 @@ app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
 
 serializer = URLSafeTimedSerializer(app.secret_key)
 
+app.jinja_env.globals["csrf_token"] = csrf_token
+
 def generate_reset_token(user_id):
     return serializer.dumps(user_id, salt="password-reset")
 
@@ -182,9 +184,6 @@ def csrf_token():
     if "csrf_token" not in session:
         session["csrf_token"] = secrets.token_urlsafe(32)
     return session["csrf_token"]
-
-# Make it usable in templates as {{ csrf_token() }}
-app.jinja_env.globals["csrf_token"] = csrf_token
 
 @app.before_request
 def csrf_protect():
@@ -339,13 +338,13 @@ def admin_schedule_import():
         im = ImageEnhance.Sharpness(im).enhance(1.25)
 
         # Resize to a good balance for speed + clarity
-        MAX_W = 1200
+        MAX_W = 1700
         if im.width > MAX_W:
             new_h = int(im.height * (MAX_W / im.width))
             im = im.resize((MAX_W, new_h), Image.LANCZOS)
 
         buf = BytesIO()
-        im.save(buf, format="JPEG", quality=75)
+        im.save(buf, format="JPEG", quality=90)
         img_bytes = buf.getvalue()
     except Exception:
         app.logger.exception("Image preprocessing failed; continuing with original bytes")
@@ -443,7 +442,7 @@ def admin_schedule_import():
             "username": (s.get("username") or "").strip().lower(),
             "date": (s.get("date") or "").strip(),
             "raw_text": s.get("raw_text") or "",
-            "time_text": s.get("time_text"),  # keep this!
+            "time_text": (s.get("time_text") or "").strip(),
             "confidence": float(s.get("confidence") or 0.0),
         })
     parsed["shifts"] = fixed
@@ -463,7 +462,7 @@ def admin_schedule_import_apply():
         return redirect(url_for("admin_schedule_import"))
 
     shifts = payload.get("shifts") or []
-    app.logger.info("APPLY received %s shifts. Sample: %s", len(shifts), shifts[:3])
+    app.logger.warning("APPLY received %s shifts. Sample: %s", len(shifts), shifts[:3])
     week_start = payload.get("week_start") or ""
 
     saved = 0
@@ -483,12 +482,13 @@ def admin_schedule_import_apply():
         time_text = (s.get("time_text") or "").strip()
         if not time_text:
             skipped_missing += 1
+            app.logger.warning("MISSING time_text shift=%r", s)
             continue
 
         start_s, end_s = parse_time_text(time_text)
         if not start_s or not end_s:
             skipped_missing += 1
-            app.logger.info("PARSE FAIL time_text=%r shift=%r", time_text, s)
+            app.logger.warning("PARSE FAIL time_text=%r shift=%r", time_text, s)
             continue
 
         try:
