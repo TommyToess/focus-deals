@@ -241,8 +241,7 @@ def _looks_insane(start_t, end_t):
     e = end_t.hour * 60 + end_t.minute
     dur = e - s
     if dur <= 0:
-        dur += 24 * 60  # overnight
-    # reject <1 hour or >16 hours
+        dur += 24 * 60
     return dur < 60 or dur > 16 * 60
 
 # ---------- Undo Stack ----------
@@ -253,14 +252,14 @@ undo_stack = []
 @app.route("/admin/schedule/import", methods=["GET", "POST"])
 @admin_required
 def admin_schedule_import():
-    # Build roster for matching names -> usernames
+    # roster: used for matching names -> usernames
     users = Users.query.order_by(Users.display_name).all()
     roster = [{"username": u.username, "display": (u.display_name or u.username)} for u in users]
 
     if request.method == "GET":
         return render_template("schedule_import.html", roster=roster)
 
-    # POST: handle upload
+    # POST: image upload
     f = request.files.get("schedule_image")
     if not f or not f.filename:
         flash("Please choose an image file.", "error")
@@ -271,40 +270,46 @@ def admin_schedule_import():
         flash("That upload was empty.", "error")
         return render_template("schedule_import.html", roster=roster), 400
 
-    # Encode to data URL for vision model
     b64 = base64.b64encode(img_bytes).decode("utf-8")
     data_url = f"data:image/jpeg;base64,{b64}"
 
     prompt = f"""
 Extract a weekly employee schedule from a PHOTO of a printed grid schedule.
 
-Known employees (output ONLY the username from this list):
+Known employees (match to these, output ONLY the username):
 {json.dumps(roster)}
 
 Return STRICT JSON ONLY in this exact shape:
 {{
   "week_start": "YYYY-MM-DD" or null,
   "shifts": [
-    {{"username":"...", "date":"YYYY-MM-DD", "start_time":"HH:MM", "end_time":"HH:MM"}}
+    {{
+      "username": "...",
+      "date": "YYYY-MM-DD",
+      "raw_text": "EXACT text you read from the cell for the MAIN shift line",
+      "start_time": "HH:MM" or null,
+      "end_time": "HH:MM" or null,
+      "confidence": 0.0
+    }}
   ],
   "warnings": ["..."]
 }}
 
 CRITICAL RULES:
 - ONLY extract the MAIN shift per employee per day.
-- IGNORE meal breaks / minor entries that start with "M" (examples: "M 10:30am-11:00am", "M 9:30am-10:00am"). DO NOT output them.
-- Prefer the line that includes a role like "Cashier", "Store Manager", "Assistant Manager", "Shift Lead". That’s the main shift.
-- If a printed shift is crossed out and a handwritten replacement time exists and is readable, USE the handwritten time.
-- If a cell is blank, output nothing for that employee/date (do NOT output "Off").
-- Do NOT guess. If uncertain about a cell or employee match, SKIP it and add a warning describing what was unclear.
-- Convert times to 24-hour HH:MM.
-- If end time is earlier than start time, treat it as an overnight shift (still output HH:MM).
+- IGNORE meal breaks / minor entries that begin with "M" (example: "M 10:30am-11:00am"). Do NOT output them.
+- Prefer the line in the cell that includes a ROLE word like Cashier, Store Manager, Assistant Manager, Shift Lead.
+- raw_text MUST be exactly what you see (include AM/PM if present).
+- If AM/PM is unclear OR the time is uncertain, set start_time/end_time to null and confidence <= 0.4 and add a warning.
+- Do NOT guess AM vs PM.
+- If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time (and include that in raw_text).
+- If a cell is blank, output nothing (do NOT output "Off").
+- Convert times to 24-hour HH:MM only when confident.
 """.strip()
 
     try:
-        # Use the same API style your app already uses, with forced JSON output
         resp = client.chat.completions.create(
-            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o-mini"),
+            model=os.environ.get("OPENAI_VISION_MODEL", "gpt-4o"),
             messages=[{
                 "role": "user",
                 "content": [
@@ -319,16 +324,31 @@ CRITICAL RULES:
         parsed = json.loads(raw)
     except Exception:
         app.logger.exception("Schedule import failed")
-        flash("Import failed. Try a clearer/cropped photo of just the schedule grid.", "error")
+        flash("Import failed. Try cropping the photo to just the schedule grid (names + dates).", "error")
         return render_template("schedule_import.html", roster=roster), 500
 
-    # Basic shape guard so template doesn’t break
+    # Shape guards so template doesn't break
     if not isinstance(parsed, dict):
         parsed = {"week_start": None, "shifts": [], "warnings": ["Model returned invalid format."]}
 
     parsed.setdefault("week_start", None)
     parsed.setdefault("shifts", [])
     parsed.setdefault("warnings", [])
+
+    # Normalize shift objects (avoid KeyError in template)
+    fixed = []
+    for s in parsed["shifts"]:
+        if not isinstance(s, dict):
+            continue
+        fixed.append({
+            "username": (s.get("username") or "").strip(),
+            "date": s.get("date"),
+            "raw_text": s.get("raw_text") or "",
+            "start_time": s.get("start_time"),
+            "end_time": s.get("end_time"),
+            "confidence": float(s.get("confidence") or 0.0),
+        })
+    parsed["shifts"] = fixed
 
     return render_template("schedule_import.html", roster=roster, parsed=parsed)
 
@@ -347,9 +367,23 @@ def admin_schedule_import_apply():
     week_start = payload.get("week_start") or ""
 
     saved = 0
+    skipped_low_conf = 0
+    skipped_missing = 0
     skipped_insane = 0
 
     for s in shifts:
+        if not isinstance(s, dict):
+            continue
+
+        conf = float(s.get("confidence") or 0.0)
+        if conf < 0.75:
+            skipped_low_conf += 1
+            continue
+
+        if not s.get("start_time") or not s.get("end_time"):
+            skipped_missing += 1
+            continue
+
         try:
             username = (s.get("username") or "").strip()
             if not username:
@@ -359,9 +393,9 @@ def admin_schedule_import_apply():
             start_time = datetime.strptime(s["start_time"], "%H:%M").time()
             end_time = datetime.strptime(s["end_time"], "%H:%M").time()
         except Exception:
+            skipped_missing += 1
             continue
 
-        # sanity filter
         if _looks_insane(start_time, end_time):
             skipped_insane += 1
             continue
@@ -370,7 +404,7 @@ def admin_schedule_import_apply():
         if existing:
             existing.start_time = start_time
             existing.end_time = end_time
-            existing.role = None  # you don’t want roles
+            existing.role = None
         else:
             db.session.add(ScheduleShift(
                 employee=username,
@@ -379,17 +413,16 @@ def admin_schedule_import_apply():
                 end_time=end_time,
                 role=None
             ))
-
         saved += 1
 
     db.session.commit()
 
-    if skipped_insane:
-        flash(f"Imported {saved} shifts. Skipped {skipped_insane} suspicious shifts.", "success")
-    else:
-        flash(f"Imported {saved} shifts.", "success")
+    flash(
+        f"Imported {saved} shifts. "
+        f"Skipped {skipped_low_conf} low-confidence, {skipped_missing} missing-time, {skipped_insane} suspicious.",
+        "success"
+    )
 
-    # redirect back to schedule week if we have it
     if week_start:
         return redirect(url_for("admin_schedule", week_start=week_start))
     return redirect(url_for("admin_schedule"))
