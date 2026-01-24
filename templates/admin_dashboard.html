@@ -23,8 +23,8 @@
     <h3 style="margin-top:0;">Quick Actions</h3>
 
     <div class="admin-actions">
-      <a href="{{ url_for('daily_closeout') }}">✅ Daily Closeout</a>
-      <button type="button" class="fab" id="fab-add" title="Add entry">+ Manual Entry</button>
+      <a href="{{ url_for('daily_closeout') }}" class="admin-tile">✅ Daily Closeout</a>
+      <button type="button" id="fab-add" title="Add entry" class="admin-tile">+ Manual Entry</button>
       <a href="{{ url_for('admin_history') }}" class="admin-tile">📜 History</a>
       <a href="{{ url_for('admin_schedule') }}" class="admin-tile">🗓️ Edit Schedule</a>
       <a href="{{ url_for('admin_users') }}" class="admin-tile">👥 Manage Users</a>
