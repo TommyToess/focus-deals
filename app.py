@@ -312,17 +312,17 @@ def admin_schedule_import():
         im = im.convert("RGB")
 
         # Boost readability of tiny 'am/pm'
-        im = ImageEnhance.Contrast(im).enhance(1.35)
-        im = ImageEnhance.Sharpness(im).enhance(1.35)
+        im = ImageEnhance.Contrast(im).enhance(1.25)
+        im = ImageEnhance.Sharpness(im).enhance(1.25)
 
         # Resize to a good balance for speed + clarity
-        MAX_W = 1400
+        MAX_W = 1200
         if im.width > MAX_W:
             new_h = int(im.height * (MAX_W / im.width))
             im = im.resize((MAX_W, new_h), Image.LANCZOS)
 
         buf = BytesIO()
-        im.save(buf, format="JPEG", quality=88)
+        im.save(buf, format="JPEG", quality=75)
         img_bytes = buf.getvalue()
     except Exception:
         app.logger.exception("Image preprocessing failed; continuing with original bytes")
@@ -340,17 +340,19 @@ def admin_schedule_import():
     Return STRICT JSON ONLY in this exact shape:
     {{
     "week_start": "YYYY-MM-DD" or null,
+    "columns": ["YYYY-MM-DD","YYYY-MM-DD","YYYY-MM-DD","YYYY-MM-DD","YYYY-MM-DD","YYYY-MM-DD","YYYY-MM-DD"],
     "shifts": [
         {{
         "username": "...",
         "date": "YYYY-MM-DD",
-        "raw_text": "EXACT text you read from the cell for the MAIN shift line",
-        "time_text": "EXACT time range as printed (e.g. 4:30am-10:00am) or null",
+        "raw_text": "...",
+        "time_text": "..." or null,
         "confidence": 0.0
         }}
     ],
     "warnings": ["..."]
     }}
+
 
     RULES:
     - Extract the MAIN shift per employee per day.
@@ -364,6 +366,13 @@ def admin_schedule_import():
     - If a printed shift is crossed out and a handwritten replacement exists and is readable, use the handwritten time.
     - If a cell is blank, output nothing for that employee/date (do NOT output "Off").
     - Use higher confidence when the time_text is clear and includes am/pm.
+    
+    DATE MAPPING (VERY IMPORTANT):
+    - The schedule has columns for Sat 01/24, Sun 01/25, Mon 01/26, Tue 01/27, Wed 01/28, Thu 01/29, Fri 01/30.
+    - You MUST assign each shift to the correct column date.
+    - Do NOT default all rows to week_start.
+    - If you cannot read a column header, add a warning and skip that column.
+
     """.strip()
 
     try:
@@ -393,6 +402,7 @@ def admin_schedule_import():
     parsed.setdefault("week_start", None)
     parsed.setdefault("shifts", [])
     parsed.setdefault("warnings", [])
+    parsed.setdefault("columns", [])
 
     # Normalize shift objects
     fixed = []
