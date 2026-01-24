@@ -395,11 +395,13 @@ def admin_schedule_import():
             temperature=0.1,
         )
         raw = (resp.choices[0].message.content or "").strip()
+        app.logger.info("MODEL RAW OUTPUT: %s", raw[:2000])
         parsed = json.loads(raw)
-    except Exception:
+    except Exception as e:
         app.logger.exception("Schedule import failed")
-        flash("Import failed. Try cropping the photo to only the schedule grid (names + dates).", "error")
+        flash(f"Import failed: {type(e).__name__}: {e}", "error")
         return render_template("schedule_import.html", roster=roster, display_map=display_map), 500
+
 
     # Shape guards
     if not isinstance(parsed, dict):
