@@ -1,92 +1,72 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="page-container">
+<div class="container py-4">
 
-  <!-- Header row -->
-  <div class="dashboard-header">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
     <div>
-      <h1>Leaderboard</h1>
-      <p class="muted">
+      <h1 class="mb-1">Leaderboard</h1>
+      <p class="text-muted mb-0">
         Showing: {{ start_date|pretty_date }} – {{ end_date|pretty_date }}
-        <span class="muted-sep">•</span>
+        <span class="mx-2">•</span>
         Ranked by <strong>Deals Per Hour (DPH)</strong>
       </p>
     </div>
-
-    <div class="badge">
+    <span class="badge bg-info text-dark mt-2">
       Deals in range: <strong>{{ deals_done }}</strong>
-    </div>
+    </span>
   </div>
 
-  <div class="content-card">
-
-    <!-- Filter Form -->
-    <form method="get" class="form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="form-row">
-        <div class="field">
-          <label>Start date</label>
-          <input type="date" name="start_date" value="{{ start_date }}">
-        </div>
-
-        <div class="field">
-          <label>End date</label>
-          <input type="date" name="end_date" value="{{ end_date }}">
-        </div>
-
-        <div class="field field-button">
-          <label>&nbsp;</label>
-          <button type="submit" class="submit">Filter</button>
-        </div>
-      </div>
-    </form>
-
-    <!-- Leaderboard Table -->
-    <div class="table-wrap" style="margin-top: 14px;">
-      <table class="leaderboard-table">
-        <thead>
-          <tr>
-            <th style="width:80px;">Place</th>
-            <th>Employee</th>
-            <th style="width:140px;">Hours</th>
-            <th style="width:140px;">Deals</th>
-            <th style="width:140px;">DPH</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in leaderboard %}
-          <tr class="
-              {% if loop.index == 1 %} rank-1
-              {% elif loop.index == 2 %} rank-2
-              {% elif loop.index == 3 %} rank-3
-              {% endif %}
-            ">
-            <td>{{ loop.index }}</td>
-            <td>
-              <a href="{{ url_for('employee_profile', name=row.employee) }}">
-                {{ display_name(row.employee) }}
-              </a>
-            </td>
-            <td>{{ row.hours|round(2) }}</td>
-            <td>{{ row.deals }}</td>
-            <td>
-              {{ row.dph }}
-              <div class="subtle-note">{{ row.hours|round(2) }} hrs logged</div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- Filter Form -->
+  <form method="get" class="row g-3 mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="col-md-4">
+      <label class="form-label">Start date</label>
+      <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
     </div>
 
-    <p class="muted" style="margin-top: 14px;">
-      Monthly target: {{ deals_done }} / {{ settings.monthly_deal_target }} deals.
-      Stretch: {{ deals_done }} / {{ settings.stretch_goal }} deals.
-      <br>
-    </p>
+    <div class="col-md-4">
+      <label class="form-label">End date</label>
+      <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+    </div>
 
+    <div class="col-md-4 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+  </form>
+
+  <!-- Leaderboard Table -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle text-center">
+      <thead class="table-light">
+        <tr>
+          <th scope="col" style="width: 80px;">Place</th>
+          <th scope="col">Employee</th>
+          <th scope="col" style="width: 140px;">Hours</th>
+          <th scope="col" style="width: 140px;">Deals</th>
+          <th scope="col" style="width: 140px;">DPH</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in leaderboard %}
+        <tr class="{% if loop.index == 1 %}table-warning{% elif loop.index == 2 %}table-info{% elif loop.index == 3 %}table-success{% endif %}">
+          <td>{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('employee_profile', name=row.employee) }}">
+              {{ display_name(row.employee) }}
+            </a>
+          </td>
+          <td>{{ row.hours }}</td>
+          <td>{{ row.deals }}</td>
+          <td><strong>{{ row.dph }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
+
 </div>
 
 {% endblock %}
