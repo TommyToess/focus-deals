@@ -1,56 +1,63 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="stack">
-  <div class="page-header">
-    <h1>Settings</h1>
+<div class="container py-4">
+
+  <h2>Settings</h2>
+
+  <!-- Settings Form -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label for="current_month_start" class="form-label">Current Month Start</label>
+          <input id="current_month_start" type="date" name="current_month_start"
+                 class="form-control" value="{{ settings.current_month_start }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="current_month_end" class="form-label">Current Month End</label>
+          <input id="current_month_end" type="date" name="current_month_end"
+                 class="form-control" value="{{ settings.current_month_end }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="monthly_deal_target" class="form-label">Monthly Deal Target</label>
+          <input id="monthly_deal_target" type="number" name="monthly_deal_target"
+                 class="form-control" value="{{ settings.monthly_deal_target }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="stretch_goal" class="form-label">Stretch Goal</label>
+          <input id="stretch_goal" type="number" name="stretch_goal"
+                 class="form-control" value="{{ settings.stretch_goal }}" required>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-success">Save Settings</button>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <div class="content-card card-wide">
-    <!-- Settings form -->
-    <form method="post" class="form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="form-row">
-        <label for="current_month_start">Current month start</label>
-        <input id="current_month_start" type="date" name="current_month_start"
-               value="{{ settings.current_month_start }}" required>
-      </div>
+  <!-- Finalize Month Form -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form action="{{ url_for('finalize_month') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p class="text-muted mb-3">
+          Finalize saves the current month totals into the month comparison table.
+        </p>
 
-      <div class="form-row">
-        <label for="current_month_end">Current month end</label>
-        <input id="current_month_end" type="date" name="current_month_end"
-               value="{{ settings.current_month_end }}" required>
-      </div>
-
-      <div class="form-row">
-        <label for="monthly_deal_target">Monthly deal target</label>
-        <input id="monthly_deal_target" type="number" name="monthly_deal_target"
-               value="{{ settings.monthly_deal_target }}" required>
-      </div>
-
-      <div class="form-row">
-        <label for="stretch_goal">Stretch goal</label>
-        <input id="stretch_goal" type="number" name="stretch_goal"
-               value="{{ settings.stretch_goal }}" required>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="submit">Save settings</button>
-      </div>
-    </form>
-
-    <!-- Finalize month -->
-    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 18px 0;">
-
-    <form action="{{ url_for('finalize_month') }}" method="post" class="form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <p class="hint">Finalize saves the current month totals into the month comparison table.</p>
-
-      <div class="form-actions">
-        <button type="submit" class="submit">Finalize month and save scores</button>
-      </div>
-    </form>
+        <div class="d-grid">
+          <button type="submit" class="btn btn-outline-primary">Finalize Month and Save Scores</button>
+        </div>
+      </form>
+    </div>
   </div>
+
 </div>
 
 {% endblock %}

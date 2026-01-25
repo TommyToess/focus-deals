@@ -1,30 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="stack">
-  <div class="page-header">
-    <h1>Login</h1>
+<div class="container py-5" style="max-width: 400px;">
+
+  <!-- Page Header -->
+  <h2 class="mb-4 text-center">Login</h2>
+
+  <!-- Flash Error -->
+  {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endif %}
+
+  <!-- Login Form -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <form method="POST" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <input id="username" type="text" name="username" class="form-control" placeholder="Username" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <input id="password" type="password" name="password" class="form-control" placeholder="Password" required>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <div class="content-card card-tight">
-    <form class="form" method="POST" action="{{ url_for('login') }}">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <div class="form-row">
-        <label for="username">Username</label>
-        <input id="username" type="text" name="username" placeholder="Username" required>
-      </div>
-
-      <div class="form-row">
-        <label for="password">Password</label>
-        <input id="password" type="password" name="password" placeholder="Password" required>
-      </div>
-
-      <div class="form-actions">
-        <a href="{{ url_for('forgot_password') }}" class="muted">Forgot password?</a>
-        <button type="submit" class="submit">Login</button>
-      </div>
-    </form>
-  </div>
 </div>
 
 {% endblock %}

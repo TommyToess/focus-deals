@@ -1,104 +1,93 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="stack">
-  <div class="page-header">
-    <h1>Admin</h1>
-  </div>
+<div class="container py-4">
 
-  <!-- Current settings preview -->
-  <div class="content-card card-wide">
-    <h3 style="margin-top:0;">Current Month Settings</h3>
+  <!-- Page Header -->
+  <h2 class="mb-4">Admin Dashboard</h2>
 
-    <div class="row" style="margin-top:10px;">
-      <div class="badge">Start: {{ settings.current_month_start }}</div>
-      <div class="badge">End: {{ settings.current_month_end }}</div>
-      <div class="badge">Target: {{ settings.monthly_deal_target }}</div>
-      <div class="badge">Stretch: {{ settings.stretch_goal }}</div>
+  <!-- Current Month Settings -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Current Month Settings</h5>
+      <div class="d-flex flex-wrap gap-3 mt-3">
+        <span class="badge bg-primary">Start: {{ settings.current_month_start }}</span>
+        <span class="badge bg-primary">End: {{ settings.current_month_end }}</span>
+        <span class="badge bg-secondary">Target: {{ settings.monthly_deal_target }}</span>
+        <span class="badge bg-success">Stretch: {{ settings.stretch_goal }}</span>
+      </div>
     </div>
   </div>
 
-  <!-- Quick links -->
-  <div class="content-card card-wide">
-    <h3 style="margin-top:0;">Quick Actions</h3>
+  <!-- Quick Actions -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title">Quick Actions</h5>
+      <div class="row g-3 mt-2">
+        <div class="col-sm-6 col-md-4">
+          <a href="{{ url_for('daily_closeout') }}" class="btn btn-outline-dark w-100">✅ Daily Closeout</a>
+        </div>
+        <div class="col-sm-6 col-md-4">
+          <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#entryModal">
+            ➕ Manual Entry
+          </button>
+        </div>
+        <div class="col-sm-6 col-md-4">
+          <a href="{{ url_for('admin_history') }}" class="btn btn-outline-secondary w-100">📜 History</a>
+        </div>
+        <div class="col-sm-6 col-md-4">
+          <a href="{{ url_for('admin_schedule') }}" class="btn btn-outline-info w-100">🗓️ Edit Schedule</a>
+        </div>
+        <div class="col-sm-6 col-md-4">
+          <a href="{{ url_for('admin_schedule_import') }}" class="btn btn-outline-warning w-100">📷 Import Schedule</a>
+        </div>
+        <div class="col-sm-6 col-md-4">
+          <a href="{{ url_for('admin_users') }}" class="btn btn-outline-dark w-100">👥 Manage Users</a>
+        </div>
+        <div class="col-sm-6 col-md-4">
+          <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-secondary w-100">⚙️ Settings</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <div class="admin-actions">
-      <a href="{{ url_for('daily_closeout') }}" class="admin-tile">✅ Daily Closeout</a>
-      <button type="button" id="fab-add" title="Add entry" class="admin-tile">➕ Manual Entry</button>
-      <a href="{{ url_for('admin_history') }}" class="admin-tile">📜 History</a>
-      <a href="{{ url_for('admin_schedule') }}" class="admin-tile">🗓️ Edit Schedule</a>
-      <a class="submit" href="{{ url_for('admin_schedule_import') }}">📷 Import Schedule Photo</a>
-      <a href="{{ url_for('admin_users') }}" class="admin-tile">👥 Manage Users</a>
-      <a href="{{ url_for('admin_settings') }}" class="admin-tile">⚙️ Settings</a>
+</div>
+
+<!-- Modal for Manual Entry -->
+<div class="modal fade" id="entryModal" tabindex="-1" aria-labelledby="entryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('index') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="entryModalLabel">Add Entry</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="employee" class="form-label">Employee</label>
+            <select name="employee" id="employee" class="form-select" required>
+              {% for u in employees %}
+                <option value="{{ u.username }}">{{ u.display_name or u.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="deals" class="form-label">Deals</label>
+            <input type="number" name="deals" id="deals" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Submit Entry</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
-
-<div class="modal" id="entry-modal" aria-hidden="true">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h3>Add Entry</h3>
-      <button type="button" class="modal-close" id="modal-close">✕</button>
-    </div>
-
-    <form method="POST" action="{{ url_for('index') }}" class="modal-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label>Employee</label>
-      <select name="employee" required>
-        {% for u in employees %}
-          <option value="{{ u.username }}">{{ u.display_name or u.username }}</option>
-        {% endfor %}
-      </select>
-
-
-      <label>Date</label>
-      <input type="date" name="date" value="{{ today }}" required>
-
-      <label>Shift</label>
-      <select name="shift" required>
-        {% for s in shifts %}
-          <option value="{{ s }}">{{ s }}</option>
-        {% endfor %}
-      </select>
-
-      <label>Hours</label>
-      <input type="number" step="0.01" min="0" name="hours" required>
-
-      <label>Deals</label>
-      <input type="number" min="0" name="deals" required>
-
-      <button type="submit" class="submit" style="margin-top:10px;">Save Entry</button>
-    </form>
-  </div>
-</div>
-
-<script>
-  const fab = document.getElementById("fab-add");
-  const modal = document.getElementById("entry-modal");
-  const closeBtn = document.getElementById("modal-close");
-
-  function openModal() {
-    modal.classList.add("show");
-    modal.setAttribute("aria-hidden", "false");
-  }
-
-  function closeModal() {
-    modal.classList.remove("show");
-    modal.setAttribute("aria-hidden", "true");
-  }
-
-  fab?.addEventListener("click", openModal);
-  closeBtn?.addEventListener("click", closeModal);
-
-  // click outside modal card closes it
-  modal?.addEventListener("click", (e) => {
-    if (e.target === modal) closeModal();
-  });
-
-  // ESC closes it
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeModal();
-  });
-</script>
 
 {% endblock %}

@@ -1,95 +1,113 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="page-container">
+<div class="container py-4">
 
-  <div class="dashboard-header">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
     <div>
-      <h1>{{ display_name(employee) }}</h1>
-      <p class="muted">
+      <h2 class="mb-0">{{ display_name(employee) }}</h2>
+      <p class="text-muted mb-2">
         {{ settings.current_month_start|pretty_date }} – {{ settings.current_month_end|pretty_date }}
       </p>
     </div>
-    <a class="submit" href="{{ url_for('leaderboard') }}">Back</a>
+    <a class="btn btn-secondary mt-2" href="{{ url_for('leaderboard') }}">← Back</a>
   </div>
 
-  <div class="stats-grid">
-    <div class="stat-card light">
-      <p>Total deals</p>
-      <h2>{{ total_deals }}</h2>
-    </div>
-
-    <div class="stat-card">
-      <p>Total hours</p>
-      <h2>{{ total_hours }}</h2>
-    </div>
-
-    <div class="stat-card primary">
-      <p>DPH</p>
-      <h2>{{ dph }}</h2>
-    </div>
-  </div>
-
-  <div class="content-card" style="margin-top:16px;">
-    <h3 style="margin-bottom:12px;">DPH trend by day</h3>
-
-    {% if trend|length == 0 %}
-      <p class="muted">No entries for this month yet.</p>
-    {% else %}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Hours</th>
-              <th>Deals</th>
-              <th>DPH</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for t in trend %}
-            <tr>
-              <td>{{ t.date }}</td>
-              <td>{{ t.hours }}</td>
-              <td>{{ t.deals }}</td>
-              <td>{{ t.dph }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+  <!-- Stats Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <p class="text-muted mb-1">Total Deals</p>
+          <h3>{{ total_deals }}</h3>
+        </div>
       </div>
-    {% endif %}
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <p class="text-muted mb-1">Total Hours</p>
+          <h3>{{ total_hours }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-center shadow-sm h-100 bg-primary text-white">
+        <div class="card-body">
+          <p class="mb-1">DPH</p>
+          <h3>{{ dph }}</h3>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="content-card" style="margin-top:16px;">
-    <h3 style="margin-bottom:12px;">Recent entries</h3>
+  <!-- DPH Trend by Day -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3">DPH Trend by Day</h5>
 
-    {% if recent|length == 0 %}
-      <p class="muted">No entries yet.</p>
-    {% else %}
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Shift</th>
-              <th>Hours</th>
-              <th>Deals</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for e in recent %}
-            <tr>
-              <td>{{ e.date.strftime("%Y-%m-%d") }}</td>
-              <td>{{ e.shift }}</td>
-              <td>{{ e.hours|round(2) }}</td>
-              <td>{{ e.deals }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
+      {% if trend|length == 0 %}
+        <p class="text-muted">No entries for this month yet.</p>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover text-center">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Deals</th>
+                <th>DPH</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in trend %}
+              <tr>
+                <td>{{ t.date }}</td>
+                <td>{{ t.hours }}</td>
+                <td>{{ t.deals }}</td>
+                <td>{{ t.dph }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Entries -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Recent Entries</h5>
+
+      {% if recent|length == 0 %}
+        <p class="text-muted">No entries yet.</p>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-sm table-striped text-center">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Hours</th>
+                <th>Deals</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in recent %}
+              <tr>
+                <td>{{ e.date }}</td>
+                <td>{{ e.shift }}</td>
+                <td>{{ e.hours }}</td>
+                <td>{{ e.deals }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
   </div>
 
 </div>
