@@ -75,32 +75,38 @@
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const fab = document.getElementById("fab-add");
-    const modal = document.getElementById("entry-modal");
-    const closeBtn = document.getElementById("modal-close");
+document.addEventListener("DOMContentLoaded", function () {
+  const fab = document.getElementById("fab-add");
+  const modal = document.getElementById("entry-modal");
+  const closeBtn = document.getElementById("modal-close");
 
-    function openModal() {
-      modal.classList.add("show");
-      modal.setAttribute("aria-hidden", "false");
-    }
+  console.log({ fab, modal, closeBtn });  // ✅ Add this
 
-    function closeModal() {
-      modal.classList.remove("show");
-      modal.setAttribute("aria-hidden", "true");
-    }
+  function openModal() {
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+  }
 
-    fab?.addEventListener("click", openModal);
-    closeBtn?.addEventListener("click", closeModal);
+  function closeModal() {
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
+  }
 
-    modal?.addEventListener("click", (e) => {
+  if (fab && modal && closeBtn) {
+    fab.addEventListener("click", openModal);
+    closeBtn.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", function (e) {
       if (e.target === modal) closeModal();
     });
 
-    document.addEventListener("keydown", (e) => {
+    document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") closeModal();
     });
-  });
+  } else {
+    console.error("Modal JS failed: one or more elements not found.");
+  }
+});
 </script>
 
 {% endblock %}
