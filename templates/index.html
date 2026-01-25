@@ -1,55 +1,65 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="page-container">
+<div class="container py-4">
 
-    <!-- Header -->
-    <div class="dashboard-header">
-        <div>
-            <h1>Focus Deals Dashboard</h1>
-        </div>
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <h1 class="mb-2">Focus Deals Dashboard</h1>
+        <span class="badge bg-info text-dark fs-6">Days left: <strong>{{ days_remaining }}</strong></span>
+    </div>
 
-        <div class="days-left">
-            Days left: <strong>{{ days_remaining }}</strong>
+    <!-- Current Deal Month -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <p class="text-muted mb-1">Current Deal Month</p>
+            <h4 class="card-title">
+                {{ settings.current_month_start|pretty_date }} – {{ settings.current_month_end|pretty_date }}
+            </h4>
+            <span class="badge bg-secondary mt-2">Daily Needed: {{ daily_needed }}</span>
         </div>
     </div>
 
-    <!-- Month Context -->
-    <div class="content-card month-card">
-        <p class="muted">Current deal month</p>
-        <h3>
-            {{ settings.current_month_start|pretty_date }}
-            –
-            {{ settings.current_month_end|pretty_date }}
-        </h3>
-        <span class="pill">Daily needed: {{ daily_needed }}</span>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card light">
-            <p>Deals done</p>
-            <h2>{{ deals_done }}</h2>
+    <!-- Stats Grid -->
+    <div class="row g-3">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <p class="text-muted">Deals Done</p>
+                    <h3>{{ deals_done }}</h3>
+                </div>
+            </div>
         </div>
 
-        <div class="stat-card primary">
-            <p>Main goal</p>
-            <h2>{{ settings.monthly_deal_target }}</h2>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center shadow-sm h-100 bg-primary text-white">
+                <div class="card-body">
+                    <p>Main Goal</p>
+                    <h3>{{ settings.monthly_deal_target }}</h3>
+                </div>
+            </div>
         </div>
 
-        <div class="stat-card success">
-            <p>Stretch goal</p>
-            <h2>{{ settings.stretch_goal }}</h2>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center shadow-sm h-100 bg-success text-white">
+                <div class="card-body">
+                    <p>Stretch Goal</p>
+                    <h3>{{ settings.stretch_goal }}</h3>
+                </div>
+            </div>
         </div>
 
-        <div class="stat-card">
-            <p>Month progress</p>
-            <h2>{{ goal_pct }}%</h2>
-            <p class="muted" style="margin-top:6px;">
-                Goal: {{ goal_pct }}% • Stretch: {{ stretch_pct }}%
-            </p>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card text-center shadow-sm h-100">
+                <div class="card-body">
+                    <p>Month Progress</p>
+                    <h3>{{ goal_pct }}%</h3>
+                    <p class="text-muted small mt-2">
+                        Goal: {{ goal_pct }}% • Stretch: {{ stretch_pct }}%
+                    </p>
+                </div>
+            </div>
         </div>
-
     </div>
 
 </div>
