@@ -343,6 +343,10 @@ def parse_time_text(time_text: str):
 
     return to24(sh, sm, sap), to24(eh, em, eap)
 
+@app.context_processor
+def inject_now():
+    return {'now': datetime.utcnow()}
+
 # ---------- Undo Stack ----------
 undo_stack = []
 
