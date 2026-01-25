@@ -24,7 +24,7 @@
       <h5 class="card-title">Quick Actions</h5>
       <div class="d-flex flex-wrap gap-3 mt-3">
         <a href="{{ url_for('daily_closeout') }}" class="btn btn-outline-dark">✅ Daily Closeout</a>
-        <button type="button" id="fab-add" title="Add entry" class="btn btn-outline-primary">➕ Manual Entry</button>
+        <button id="fab-add" class="btn btn-outline-primary">➕ Manual Entry</button>
         <a href="{{ url_for('admin_history') }}" class="btn btn-outline-secondary">📜 History</a>
         <a href="{{ url_for('admin_schedule') }}" class="btn btn-outline-info">🗓️ Edit Schedule</a>
         <a class="btn btn-outline-warning" href="{{ url_for('admin_schedule_import') }}">📷 Import Schedule Photo</a>
