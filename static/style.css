@@ -1,38 +1,32 @@
 /* ================================
-   Focus Deals – style.css (clean)
-   Includes: Admin dashboard tiles + user mgmt + schedule editable/view
+   Focus Deals – style.css 
    ================================ */
 
-/* Prevent "mystery" horizontal scrolling from padding/width calculations */
+/* ------------ Reset + Base ------------ */
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body {
   width: 100%;
   overflow-x: hidden;
-}
-
-/* Keep media + widgets from overflowing their containers on small screens */
-img, video, canvas, svg, table { max-width: 100%; }
-input, select, button, textarea { max-width: 100%; }
-
-
-/* ---------- App Layout ---------- */
-body {
   margin: 0;
   background: #f5f6fa;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   color: #111827;
 }
 
-.page {
-  max-width: 980px;
+img, video, canvas, svg, table,
+input, select, button, textarea {
+  max-width: 100%;
+}
+
+/* ------------ Layout ------------ */
+.page, .page-container {
   margin: 0 auto;
   padding: 0 14px 40px;
 }
 
 .page-container {
   max-width: 1100px;
-  margin: 0 auto;
   padding: 30px 20px;
 }
 
@@ -49,42 +43,22 @@ body {
   font-size: 1.55rem;
 }
 
-.stack {
-  display: grid;
-  gap: 16px;
-}
-
-.row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.row.right {
-  justify-content: flex-end;
-}
+.stack { display: grid; gap: 16px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.row.right { justify-content: flex-end; }
 
 .center { text-align: center; }
+.muted, .hint { color: #6b7280; }
+.hint { font-size: 0.92rem; margin: 0; }
 
-.muted {
-  color: #6b7280;
-}
-
-.hint {
-  font-size: 0.92rem;
-  color: #6b7280;
-  margin: 0;
-}
-
-/* ---------- Navbar ---------- */
+/* ------------ Navbar ------------ */
 .navbar {
   background: #2f80ed;
   padding: 15px 20px;
-  display: flex;
-  gap: 20px;
   border-radius: 8px;
   margin-bottom: 30px;
+  display: flex;
+  gap: 20px;
   align-items: center;
 }
 
@@ -101,127 +75,100 @@ body {
   text-decoration: none;
 }
 
-.navbar a:hover {
-  text-decoration: underline;
+.navbar a:hover { text-decoration: underline; }
+.navbar a.right-link { margin-left: auto; }
+
+/* ------------ Containers / Cards ------------ */
+.container {
+  width: 100%;
+  max-width: 1140px;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin: 0 auto;
 }
 
-.navbar a.right-link {
-  margin-left: auto;
-}
-
-/* ---------- Cards ---------- */
 .content-card {
-  background: #ffffff;
+  background: #fff;
   padding: 25px;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.08);
   margin-bottom: 20px;
 }
 
-.card-tight {
-  max-width: 460px;
-  margin: 0 auto;
-}
+.card-tight { max-width: 460px; margin: 0 auto; }
+.card-wide  { max-width: 820px; margin: 0 auto; }
 
-.card-wide {
-  max-width: 820px;
-  margin: 0 auto;
-}
-
-/* ---------- Pills / Badges ---------- */
-.pill {
+/* ------------ Pills / Badges ------------ */
+.pill, .badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 14px;
-  border-radius: 999px;
   font-weight: 700;
-  background: #eef2ff;
+  border-radius: 999px;
+  padding: 10px 14px;
 }
 
 .badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-radius: 10px;
   background: #eef3ff;
   color: #1f2a44;
-  font-weight: 600;
+  gap: 6px;
+  border-radius: 10px;
 }
 
-/* ---------- Flash messages ---------- */
+/* ------------ Flash Messages ------------ */
 .flash {
   padding: 10px 12px;
   border-radius: 10px;
   font-weight: 600;
-  margin: 0 0 14px;
+  margin-bottom: 14px;
 }
 
 .flash.success { background: #e8f7ee; color: #1f7a3a; }
 .flash.error   { background: #fde8e8; color: #b42318; }
 .flash.info    { background: #e6f7ff; color: #1b4d8f; }
 
-/* ---------- Forms ---------- */
-.form {
+/* ------------ Forms ------------ */
+.form, .form-row, .modal-form {
   display: grid;
   gap: 12px;
-}
-
-.form-row {
-  display: grid;
-  gap: 6px;
 }
 
 .form-row label {
   font-weight: 700;
 }
 
-.form-actions {
+.form-actions, .form-inline {
   display: flex;
   gap: 10px;
   align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  margin-top: 6px;
-}
-
-.form-inline {
-  display: flex;
-  gap: 10px;
-  align-items: end;
   flex-wrap: wrap;
 }
 
+.form-actions { justify-content: flex-end; margin-top: 6px; }
 .form-inline .form-row {
   min-width: 160px;
   flex: 1 1 180px;
 }
 
-/* Inputs (global) */
-form input,
-form select {
+/* Form Inputs */
+form input, form select {
   width: 100%;
   padding: 10px;
   margin-top: 5px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  font-size: 1rem;
   height: 42px;
-  box-sizing: border-box;
+  border-radius: 6px;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
 }
 
-form input:focus,
-form select:focus {
+form input:focus, form select:focus {
   border-color: #2f80ed;
   outline: none;
 }
 
-/* ---------- Buttons ---------- */
-/* Base button */
-button {
+/* ------------ Buttons ------------ */
+button, .submit, .btn {
   padding: 10px 20px;
-  border: none;
   border-radius: 8px;
   font-size: 1rem;
   font-weight: 600;
@@ -229,40 +176,47 @@ button {
   transition: all 0.2s ease;
 }
 
-button:hover { opacity: 0.92; }
+button:hover, .submit:hover, .btn:hover {
+  opacity: 0.92;
+}
 
-/* Use .submit on BOTH <a> and <button> */
-.submit {
+.submit, .btn-primary {
   background-color: #2f80ed;
   color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
   border: none;
-  display: inline-block;
   text-decoration: none;
+  display: inline-block;
 }
 
-.submit:hover { opacity: 0.92; }
+.btn-outline-primary {
+  border: 2px solid #2f80ed;
+  background: transparent;
+  color: #2f80ed;
+}
+
+.btn-outline-primary:hover {
+  background: #2f80ed;
+  color: white;
+}
+
+.btn-outline-dark {
+  border: 2px solid #333;
+  background: transparent;
+  color: #333;
+}
+
+.btn-outline-dark:hover {
+  background: #333;
+  color: white;
+}
 
 .delete { background-color: #eb5757; color: white; }
 .undo   { background-color: #27ae60; color: white; }
 
-/* Variants used on admin users page */
-.submit.secondary {
-  background: #e5e7eb;
-  color: #111827;
-}
+.submit.secondary { background: #e5e7eb; color: #111827; }
+.submit.danger    { background: #dc2626; color: white; }
 
-.submit.danger {
-  background: #dc2626;
-  color: white;
-}
-
-/* ---------- Tables ---------- */
+/* ------------ Tables ------------ */
 .table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -293,22 +247,7 @@ tr:nth-child(even) td {
   background: #f5f6fa;
 }
 
-/* ---------- Charts ---------- */
-canvas {
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  margin-top: 20px;
-}
-
-/* =========================================================
-   MODALS (supports BOTH modal-content AND modal-card)
-   - history.html uses .modal-content
-   - index.html uses .modal-card / .modal-form / .modal-close
-   ========================================================= */
-
-/* overlay */
+/* ------------ Modal System ------------ */
 .modal {
   display: none;
   position: fixed;
@@ -318,16 +257,21 @@ canvas {
   align-items: center;
   justify-content: center;
   padding: 14px;
-  box-sizing: border-box;
+  transition: opacity 0.2s ease-in-out;
 }
 
-/* allow either "display:flex" via JS toggling class OR inline style */
-.modal.show { display: flex; }
+.modal.show {
+  display: flex !important;
+  opacity: 1;
+}
 
-/* modal box (either class name) */
-.modal-content,
-.modal-card {
-  background: #ffffff;
+.modal:not(.show) {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-content, .modal-card {
+  background: #fff;
   padding: 20px;
   border-radius: 12px;
   width: 100%;
@@ -335,11 +279,23 @@ canvas {
   max-height: 85vh;
   overflow-y: auto;
   position: relative;
-  box-sizing: border-box;
   box-shadow: 0 12px 30px rgba(0,0,0,0.25);
 }
 
-/* history modal close "x" */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
 .close {
   position: absolute;
   top: 12px;
@@ -350,508 +306,23 @@ canvas {
   line-height: 1;
 }
 
-/* index modal header + close */
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.modal-close {
-  border: none;
-  background: transparent;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-/* modal forms */
-.modal-content form.form,
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* =========================================================
-   DASHBOARD / HOME
-   ========================================================= */
-
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.dashboard-header h1 { margin: 0; }
-
-.days-left {
-  background: #eef3ff;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 600;
-}
-
-.month-card {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  padding: 20px;
-  border-radius: 14px;
-  text-align: center;
-  background: white;
-}
-
-.stat-card p {
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.stat-card h2 {
-  margin: 0;
-  font-size: 1.8rem;
-}
-
-.stat-card.primary { background: #2f80ed; color: white; }
-.stat-card.success { background: #27ae60; color: white; }
-.stat-card.light   { background: #eaf6ff; }
-
-/* Floating action button (if used) */
-.fab {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #2f80ed;
-  color: white;
-  font-size: 28px;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(0,0,0,0.25);
-}
-
-/* =========================================================
-   LEADERBOARD
-   ========================================================= */
-.muted-sep { margin: 0 8px; opacity: 0.5; }
-
-.leaderboard-table a {
-  color: inherit;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.leaderboard-table a:hover {
-  text-decoration: underline;
-}
-
-.rank-1 {
-  background: #fff8db;
-  border-left: 6px solid #f2c94c;
-  font-weight: 600;
-}
-.rank-2 {
-  background: #f4f7ff;
-  border-left: 6px solid #b9c7ff;
-}
-.rank-3 {
-  background: #fff1e8;
-  border-left: 6px solid #f2a16c;
-}
-
-.subtle-note {
-  font-size: 0.85rem;
-  opacity: 0.7;
-  margin-top: 3px;
-}
-
-.small-note {
-  font-size: 0.85rem;
-  opacity: 0.75;
-}
-
-/* =========================================================
-   CHAT (Ask page)
-   ========================================================= */
-.chat-shell {
-  display: grid;
-  gap: 12px;
-}
-
-.chat-window {
-  height: 440px;
-  max-height: 55vh;
-  overflow-y: auto;
-  padding: 14px;
-  border: 1px solid #d1d5db;
-  background: #fbfbfd;
-  border-radius: 12px;
-}
-
-.bubble {
-  max-width: 78%;
-  padding: 10px 12px;
-  border-radius: 14px;
-  margin: 8px 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.25;
-}
-
-.bubble.user {
-  margin-left: auto;
-  background: #2f80ed;
-  color: #fff;
-  border-bottom-right-radius: 6px;
-}
-
-.bubble.assistant {
-  margin-right: auto;
-  background: #e5e7eb;
-  color: #111827;
-  border-bottom-left-radius: 6px;
-}
-
-.typing {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #6b7280;
-  opacity: 0.55;
-  animation: bounce 1.05s infinite;
-}
-
-.dot:nth-child(2){ animation-delay: 0.15s; }
-.dot:nth-child(3){ animation-delay: 0.3s; }
-
-@keyframes bounce {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
-  40% { transform: translateY(-4px); opacity: 0.9; }
-}
-
-/* =========================================================
-   SCHEDULE (Full-width layout + editable/view)
-   ========================================================= */
-
-.page-full-width {
-  max-width: 100%;
-  padding-left: 16px;
-  padding-right: 16px;
-}
-
-.schedule-card { padding: 12px; }
-
-.no-horizontal-scroll { overflow-x: hidden; }
-
-.schedule-table {
-  width: 100%;
-  table-layout: fixed;
-}
-
-.emp-col { width: 160px; }
-.day-col { width: calc((100% - 160px) / 7); }
-
-.schedule-table td,
-.schedule-table th {
-  vertical-align: top;
-}
-
-.emp-name {
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.schedule-cell { padding: 8px; }
-
-.schedule-form {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.time-row{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.time-row input[type="time"]{
-  flex: 1 1 0;
-  min-width: 0;
-  width: auto;
-  padding: 6px;
-  font-size: 0.9rem;
-  margin-top: 0;
-  height: 36px;
-}
-
-.dash{
-  flex: 0 0 auto;
-  opacity: 0.6;
-  font-weight: 600;
-}
-
-@media (max-width: 640px){
-  .time-row{
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .dash{ display:none; }
-}
-
-.schedule-form select {
-  width: 100%;
-  padding: 6px;
-  font-size: 0.9rem;
-  margin-top: 0;
-  height: 36px;
-}
-
-.mini-save {
-  margin-top: 4px;
-  background: #2f80ed;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 10px;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.mini-save:hover { opacity: 0.95; }
-
-.saved-note {
-  font-size: 0.85rem;
-  opacity: 0.65;
-}
-
-.view-only-note {
-  font-size: 0.9rem;
-  opacity: 0.85;
-  padding-top: 2px;
-}
-
-/* --- Schedule: responsive "no horizontal scroll" layout ---
-   On small screens, the schedule table becomes stacked employee cards.
-   This avoids left-right scrolling while staying readable.
-*/
-@media (max-width: 860px) {
-  .schedule-card { padding: 10px; }
-
-  /* Let the wrapper show everything (we won't need horizontal scroll) */
-  .table-wrap.no-horizontal-scroll { overflow-x: visible; }
-
-  .schedule-table,
-  .schedule-table thead,
-  .schedule-table tbody,
-  .schedule-table th,
-  .schedule-table td,
-  .schedule-table tr {
-    display: block;
-    width: 100%;
-  }
-
-  .schedule-table thead { display: none; }
-
-  .schedule-table tr {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    overflow: hidden;
-    margin: 0 0 12px;
-  }
-
-  .schedule-table td {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 12px;
-    text-align: left;
-    border-top: 1px solid #eef2f7;
-  }
-
-  .schedule-table td::before {
-    content: attr(data-label);
-    flex: 0 0 120px;
-    font-weight: 800;
-    color: #6b7280;
-  }
-
-  /* Employee header row inside each card */
-  .schedule-table td.emp-name {
-    background: #f5f6fa;
-    border-top: none;
-    font-weight: 900;
-  }
-
-  .schedule-table td.emp-name::before {
-    content: "Employee";
-    color: #6b7280;
-  }
-
-  /* Make the contents fill the available space */
-  .schedule-table td .schedule-form,
-  .schedule-table td .view-only-note {
-    width: 100%;
-  }
-
-  /* Editable cell inputs: stack nicely */
-  .time-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-
-  .dash { display: none; }
-
-  .mini-save { width: 100%; }
-}
-
-
-/* =========================================================
-   ADMIN – Users page (checkbox sizing + actions)
-   ========================================================= */
-
-.checkbox-row {
-  display: flex;
-  gap: 18px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.checkbox-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-
-.checkbox-inline input[type="checkbox"] {
-  width: auto !important;
-  height: auto !important;
-  min-width: 16px;
-  min-height: 16px;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-}
-
-.user-card {
-  padding: 12px 0;
-  border-top: 1px solid #e5e7eb;
-}
-
-.user-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-/* If you add class="admin-users-page" on the body/page wrapper */
-.admin-users-page .content-card.card-wide {
-  max-width: 980px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* =========================================================
-   ADMIN – Dashboard tiles (new)
-   ========================================================= */
-
-.admin-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.admin-tile {
-  display: block;
-  padding: 14px;
-  border-radius: 10px;
-  background: #f1f5ff;
-  color: #1f2937;
-  font-weight: 700;
-  text-align: left;
-  text-decoration: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
-}
-
-.admin-tile:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
-  background: #eaf0ff;
-}
-
-/* =========================================================
-   Mobile Adjustments
-   ========================================================= */
-
+/* ------------ Responsive Tweaks ------------ */
 @media (max-width: 600px) {
-  .navbar {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
+  .navbar { flex-wrap: wrap; gap: 12px; }
   .content-card { padding: 18px; }
+  th, td { padding: 10px; font-size: 0.9rem; }
 
-  th, td {
-    padding: 10px;
-    font-size: 0.9rem;
-  }
-
-  .modal-content,
-  .modal-card {
+  .modal-content, .modal-card {
     width: 95%;
     max-height: 90vh;
     padding: 15px;
   }
 
-  /* iOS Date Input Fix inside modals */
-  .modal-content input[type="date"],
   .modal-card input[type="date"] {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
     padding-left: 12px;
     padding-right: 12px;
-    box-sizing: border-box;
-    appearance: none;
-    -webkit-appearance: none;
-    text-align: left;
     font-size: 1rem;
     line-height: 1.2;
-  }
-
-  .admin-actions {
-    grid-template-columns: 1fr;
+    appearance: none;
   }
 }
