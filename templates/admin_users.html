@@ -1,123 +1,113 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="page-container">
-  <div class="page-header">
-    <h1>Manage Users</h1>
-    <button class="submit" id="add-user-btn">➕ Add User</button>
-  </div>
+<div class="page-header">
+  <h1>Manage Users</h1>
+  <button id="btn-new-user" class="submit">➕ New User</button>
+</div>
 
-  <div class="form" style="margin-bottom: 20px;">
-    <input type="text" placeholder="Search users..." style="max-width: 300px;">
-  </div>
-
-  <div class="content-card card-wide">
-    <div class="table-wrap">
-      <table>
-        <thead>
+<div class="content-card card-wide">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Display Name</th>
+          <th>Role</th>
+          <th>Must Change Password</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
           <tr>
-            <th>Display Name</th>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Active</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for user in users %}
-          <tr>
-            <td>{{ user.display_name or '—' }}</td>
             <td>{{ user.username }}</td>
-            <td>{{ user.role }}</td>
-            <td>
-              {% if user.active %}
-                ✅
-              {% else %}
-                ❌
-              {% endif %}
-            </td>
+            <td>{{ user.display_name }}</td>
+            <td>{{ "Admin" if user.is_admin else "Employee" }}</td>
+            <td>{{ "Yes" if user.must_change_password else "No" }}</td>
             <td>
               <div class="user-actions">
-                <form method="POST" action="{{ url_for('admin_users_edit', username=user.username) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <!-- Edit Form -->
+                <form method="POST" action="{{ url_for('update_user', user_id=user.id) }}">
+                  <input type="hidden" name="username" value="{{ user.username }}">
+                  <input type="hidden" name="display_name" value="{{ user.display_name }}">
+                  <input type="hidden" name="is_admin" value="{{ 'on' if user.is_admin else '' }}">
+                  <input type="hidden" name="must_change_password" value="{{ 'on' if user.must_change_password else '' }}">
                   <button type="submit" class="submit secondary">✏️ Edit</button>
                 </form>
-                <form method="POST" action="{{ url_for('admin_users_delete', username=user.username) }}"
-                      onsubmit="return confirm('Are you sure you want to delete this user?');">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <!-- Reset Password -->
+                <form method="POST" action="{{ url_for('reset_user_password', user_id=user.id) }}">
+                  <button type="submit" class="submit secondary">🔑 Reset</button>
+                </form>
+
+                <!-- Delete -->
+                <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}">
                   <button type="submit" class="submit danger">🗑 Delete</button>
                 </form>
               </div>
             </td>
           </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 
-<!-- Add User Modal -->
-<div class="modal" id="add-user-modal" aria-hidden="true">
+<!-- Modal: Create New User -->
+<div class="modal" id="user-modal" aria-hidden="true">
   <div class="modal-card">
     <div class="modal-header">
-      <h3>Add New User</h3>
-      <button type="button" class="modal-close" id="close-user-modal">✕</button>
+      <h3>Create New User</h3>
+      <button type="button" class="modal-close" id="modal-close">✕</button>
     </div>
 
-    <form method="POST" action="{{ url_for('admin_users_add') }}" class="modal-form">
+    <form method="POST" action="{{ url_for('create_user') }}" class="modal-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
+      
       <label>Username</label>
       <input type="text" name="username" required>
 
       <label>Display Name</label>
       <input type="text" name="display_name">
 
-      <label>Password</label>
-      <input type="password" name="password" required>
+      <label>Password (leave blank for auto)</label>
+      <input type="text" name="password">
 
-      <label>Role</label>
-      <select name="role" required>
-        <option value="employee">Employee</option>
-        <option value="admin">Admin</option>
-      </select>
+      <label class="checkbox-inline">
+        <input type="checkbox" name="is_admin">
+        Admin Access
+      </label>
 
-      <label>Active</label>
-      <select name="active">
-        <option value="1" selected>Yes</option>
-        <option value="0">No</option>
-      </select>
-
-      <button type="submit" class="submit" style="margin-top:10px;">Create User</button>
+      <button type="submit" class="submit" style="margin-top: 12px;">Create User</button>
     </form>
   </div>
 </div>
 
 <script>
-  const addUserBtn = document.getElementById("add-user-btn");
-  const userModal = document.getElementById("add-user-modal");
-  const closeModalBtn = document.getElementById("close-user-modal");
+  const openBtn = document.getElementById("btn-new-user");
+  const modal = document.getElementById("user-modal");
+  const closeBtn = document.getElementById("modal-close");
 
-  function openUserModal() {
-    userModal.classList.add("show");
-    userModal.setAttribute("aria-hidden", "false");
+  function openModal() {
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
   }
 
-  function closeUserModal() {
-    userModal.classList.remove("show");
-    userModal.setAttribute("aria-hidden", "true");
+  function closeModal() {
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden", "true");
   }
 
-  addUserBtn?.addEventListener("click", openUserModal);
-  closeModalBtn?.addEventListener("click", closeUserModal);
+  openBtn?.addEventListener("click", openModal);
+  closeBtn?.addEventListener("click", closeModal);
 
-  userModal?.addEventListener("click", (e) => {
-    if (e.target === userModal) closeUserModal();
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeUserModal();
+    if (e.key === "Escape") closeModal();
   });
 </script>
 
