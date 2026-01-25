@@ -74,7 +74,6 @@
   </div>
 </div>
 
-<!-- Your Custom Modal JS — Unchanged -->
 <script>
   const fab = document.getElementById("fab-add");
   const modal = document.getElementById("entry-modal");
@@ -93,10 +92,12 @@
   fab?.addEventListener("click", openModal);
   closeBtn?.addEventListener("click", closeModal);
 
+  // click outside modal card closes it
   modal?.addEventListener("click", (e) => {
     if (e.target === modal) closeModal();
   });
 
+  // ESC closes it
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeModal();
   });
