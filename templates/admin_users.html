@@ -1,83 +1,124 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container py-4">
-  <h2 class="mb-4">Manage Users</h2>
-
-  <!-- Add User -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Add User</h5>
-      <form method="POST" action="{{ url_for('create_user') }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="mb-3">
-          <label for="new_username" class="form-label">Username</label>
-          <input id="new_username" type="text" name="username" class="form-control" placeholder="Username" required>
-        </div>
-
-        <div class="mb-3">
-          <label for="new_display_name" class="form-label">Display Name</label>
-          <input id="new_display_name" type="text" name="display_name" class="form-control" placeholder="Optional display name">
-        </div>
-
-        <div class="mb-3">
-          <label for="new_password" class="form-label">Temp Password (optional)</label>
-          <input id="new_password" type="password" name="password" class="form-control">
-        </div>
-
-        <div class="form-check mb-3">
-          <input type="checkbox" class="form-check-input" id="new_is_admin" name="is_admin">
-          <label class="form-check-label" for="new_is_admin">Admin</label>
-        </div>
-
-        <div class="d-grid">
-          <button type="submit" class="btn btn-success">Create User</button>
-        </div>
-      </form>
-    </div>
+<div class="page-container">
+  <div class="page-header">
+    <h1>Manage Users</h1>
+    <button class="submit" id="add-user-btn">➕ Add User</button>
   </div>
 
-  <!-- Existing Users -->
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h5 class="card-title mb-3">Existing Users</h5>
-
-      <div class="row row-cols-1 g-4">
-        {% for user in users %}
-        <div class="col">
-          <div class="border rounded p-3">
-            <form method="POST" action="{{ url_for('update_user', user_id=user.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-              <div class="mb-2">
-                <label for="u{{ user.id }}_username" class="form-label">Username</label>
-                <input type="text" id="u{{ user.id }}_username" name="username" value="{{ user.username }}" class="form-control" required>
-              </div>
-
-              <div class="mb-2">
-                <label for="u{{ user.id }}_display" class="form-label">Display Name</label>
-                <input type="text" id="u{{ user.id }}_display" name="display_name" value="{{ user.display_name }}" class="form-control">
-              </div>
-
-              <div class="form-check mb-2">
-                <input type="checkbox" class="form-check-input" id="u{{ user.id }}_is_admin" name="is_admin" {% if user.is_admin %}checked{% endif %}>
-                <label class="form-check-label" for="u{{ user.id }}_is_admin">Admin</label>
-              </div>
-
-              <div class="d-flex justify-content-between flex-wrap gap-2">
-                <button type="submit" class="btn btn-outline-primary">Update</button>
-                <a href="{{ url_for('reset_user_password', user_id=user.id) }}" class="btn btn-outline-secondary">Reset Password</a>
-                <a href="{{ url_for('delete_user', user_id=user.id) }}" class="btn btn-outline-danger" onclick="return confirm('Delete this user?');">Delete</a>
-              </div>
-            </form>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-    </div>
+  <div class="form" style="margin-bottom: 20px;">
+    <input type="text" placeholder="Search users..." style="max-width: 300px;">
   </div>
 
+  <div class="content-card card-wide">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Display Name</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ user.display_name or '—' }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.role }}</td>
+            <td>
+              {% if user.active %}
+                ✅
+              {% else %}
+                ❌
+              {% endif %}
+            </td>
+            <td>
+              <div class="user-actions">
+                <form method="POST" action="{{ url_for('admin_users_edit', username=user.username) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="submit secondary">✏️ Edit</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_users_delete', username=user.username) }}"
+                      onsubmit="return confirm('Are you sure you want to delete this user?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="submit danger">🗑 Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
+
+<!-- Add User Modal -->
+<div class="modal" id="add-user-modal" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Add New User</h3>
+      <button type="button" class="modal-close" id="close-user-modal">✕</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin_users_add') }}" class="modal-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label>Username</label>
+      <input type="text" name="username" required>
+
+      <label>Display Name</label>
+      <input type="text" name="display_name">
+
+      <label>Password</label>
+      <input type="password" name="password" required>
+
+      <label>Role</label>
+      <select name="role" required>
+        <option value="employee">Employee</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <label>Active</label>
+      <select name="active">
+        <option value="1" selected>Yes</option>
+        <option value="0">No</option>
+      </select>
+
+      <button type="submit" class="submit" style="margin-top:10px;">Create User</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  const addUserBtn = document.getElementById("add-user-btn");
+  const userModal = document.getElementById("add-user-modal");
+  const closeModalBtn = document.getElementById("close-user-modal");
+
+  function openUserModal() {
+    userModal.classList.add("show");
+    userModal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeUserModal() {
+    userModal.classList.remove("show");
+    userModal.setAttribute("aria-hidden", "true");
+  }
+
+  addUserBtn?.addEventListener("click", openUserModal);
+  closeModalBtn?.addEventListener("click", closeUserModal);
+
+  userModal?.addEventListener("click", (e) => {
+    if (e.target === userModal) closeUserModal();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeUserModal();
+  });
+</script>
 
 {% endblock %}
