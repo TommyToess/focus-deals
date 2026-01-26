@@ -1265,7 +1265,7 @@ def index():
         )
         db.session.add(e)
         db.session.commit()
-        return redirect(url_for("index"))
+        return redirect(url_for("admin_dashboard"))
 
     employees = Users.query.order_by(Users.display_name).all()
     shifts = ["Open","Mid","Close"]
